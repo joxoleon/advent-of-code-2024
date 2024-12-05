@@ -3,6 +3,6 @@
 
 import Foundation
 
-DayTwo.partTwo()
+DayThree.testExtractDoAndDontStrings()
 
 
