@@ -17,6 +17,24 @@
             "name": "Release AdventOfCode01",
             "program": "${workspaceFolder:01}/${workspaceFolder}/DerivedData/release/AdventOfCode01",
             "preLaunchTask": "swift: Build Release AdventOfCode01"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:advent-of-code-2024}",
+            "name": "Debug AdventOfCode2024",
+            "program": "${workspaceFolder:advent-of-code-2024}/${workspaceFolder}/DerivedData/debug/AdventOfCode2024",
+            "preLaunchTask": "swift: Build Debug AdventOfCode2024"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:advent-of-code-2024}",
+            "name": "Release AdventOfCode2024",
+            "program": "${workspaceFolder:advent-of-code-2024}/${workspaceFolder}/DerivedData/release/AdventOfCode2024",
+            "preLaunchTask": "swift: Build Release AdventOfCode2024"
         }
     ]
 }

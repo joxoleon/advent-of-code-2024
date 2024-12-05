@@ -61,7 +61,6 @@ enum DayThree {
         var i = input.startIndex
 
         while i < input.endIndex {
-            print("CurrenState: \(state), Current substring: \(input[i...])")
             if input[i...].hasPrefix("do()") {
                 state = .doFound
                 i = input.index(i, offsetBy: 4) // Move past "do()"
