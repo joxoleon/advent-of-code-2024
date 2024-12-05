@@ -61,11 +61,12 @@ enum DayThree {
         var i = input.startIndex
 
         while i < input.endIndex {
+            print("CurrenState: \(state), Current substring: \(input[i...])")
             if input[i...].hasPrefix("do()") {
                 state = .doFound
                 i = input.index(i, offsetBy: 4) // Move past "do()"
             } else if input[i...].hasPrefix("don't()") {
-                if state == .doFound {
+                if state == .doFound, !currentString.isEmpty {
                     result.append(currentString)
                     currentString = ""
                 }
@@ -102,7 +103,7 @@ fileprivate extension String {
 
 extension DayThree {
     static func testExtractDoAndDontStrings() {
-        let input = "do()123don't()456do()don'tdo()don'()undo()don't()do()don't()unundo()789don't()012"
+        let input = "do()123don't()456do()don't()do()don't()undo()don't()do()don't()unundo()789don't()012"
         let result = extractStringsBetweenDoAndDont(from: input)
         print(result)
         assert(result == ["123", "789"])
