@@ -15,8 +15,9 @@ extension Day {
     }
 
     public func loadInput() -> String {
-        let fileUrl = URL(fileURLWithPath: inputFileName)
-        return try! String(contentsOf: fileUrl, encoding: .utf8)
+        let basePath = "/Users/jovanradivojsa/Desktop/workspace/advent-of-code/advent-of-code-2024"
+        let path = "\(basePath)/\(inputFileName)"
+        return try! String(contentsOfFile: path, encoding: .utf8)
     }
 
     public func run() {
