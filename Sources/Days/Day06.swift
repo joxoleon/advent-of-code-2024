@@ -158,6 +158,13 @@ fileprivate class Player {
 
     func run() {
         while !nextPosition().hasExitedMap() {
+            move()
+        }
+        print("Visited \(visited.count) positions")
+    }
+
+    func runWithRendering() {
+        while !nextPosition().hasExitedMap() {
             renderMap()
             move()
         }
@@ -195,7 +202,7 @@ fileprivate class Player {
         print(renderMatrix)
 
         // Delay for a bit
-        usleep(1_000)
+        usleep(25_000)
     }
 
 }
