@@ -1,13 +1,12 @@
 // https://adventofcode.com/2024/day/1
 import Foundation
 
-enum DayOne {
+class DayOne: Day {
+    var dayNumber: Int = 1
 
-    static func partOne() {
-        // Load input data
-        let inputLines = try! Utility.loadFile(named: "input01.txt")
+    func partOne(input: String) -> String {
+        let inputLines = input.split(separator: "\n").map { String($0) }
         
-        // Format the input data into a tuple of arrays
         var (firstElements, secondElements) =
             inputLines
             .map { $0.split(separator: " ").map { Int($0)! } }
@@ -16,7 +15,6 @@ enum DayOne {
                 result.1.append(pair[1])
             }
         
-        // Part 1
         firstElements.sort()
         secondElements.sort()
         
@@ -24,15 +22,13 @@ enum DayOne {
         for i in 0..<firstElements.count {
             result += abs(firstElements[i] - secondElements[i])
         }
-        print("Day one, part one result: \(result)")
+        
+        return "\(result)"
     }
 
-
-    static func partTwo() {
-        // Load input data
-        let inputLines = try! Utility.loadFile(named: "input01.txt")
+    func partTwo(input: String) -> String {
+        let inputLines = input.split(separator: "\n").map { String($0) }
         
-        // Format the input data into a tuple of arrays
         let (firstElements, secondElements) =
             inputLines
             .map { $0.split(separator: " ").map { Int($0)! } }
@@ -41,7 +37,6 @@ enum DayOne {
                 result.1.append(pair[1])
             }
         
-        // Part 2
         var countingSortArray = Array(repeating: 0, count: 100000)
         for element in secondElements {
             countingSortArray[element] += 1
@@ -52,8 +47,18 @@ enum DayOne {
             result += element * countingSortArray[element]
         }
         
-        print("Day one, part two result: \(result)")
-    }  
+        return "\(result)"
+    }
 
-
+    func test() {
+        let input = """
+            1 2
+            2 3
+            3 4
+            4 5
+            5 6
+            """
+        let result = partOne(input: input)
+        assert(result == "5")
+    }
 }

@@ -1,44 +1,31 @@
 // https://adventofcode.com/2024/day/3
 import Foundation
 
-enum DayThree {
+class DayThree: Day {
+    var dayNumber: Int = 3
 
-    // MARK: - Part One
-
-    static func partOne() {
-        // Load input data
-        let inputLines = try! Utility.loadFile(named: "input03.txt")
-        let input = inputLines.joined()
-
+    func partOne(input: String) -> String {
         var result: Int128 = 0
         let mulOperations = extractMulOperations(from: input)
         for operation in mulOperations {
             result += evaluateMulOperation(operation)
         }
-        
-        print(result)
+        return "\(result)"
     }
 
-    static func extractMulOperations(from input: String) -> [String] {
+    func extractMulOperations(from input: String) -> [String] {
         let pattern = "mul\\((\\d+),(\\d+)\\)"
         return input.matches(for: pattern)
     }
 
-    static func evaluateMulOperation(_ operation: String) -> Int128 {
+    func evaluateMulOperation(_ operation: String) -> Int128 {
         let parathesesContent = operation.dropFirst(4).dropLast(1)
         let numbers = parathesesContent.split(separator: ",").map { Int128($0)! }
         assert(numbers.count == 2)
         return numbers[0] * numbers[1]
     }
 
-    // MARK: - Part Two
-
-    static func partTwo() {
-        // Load input data
-        let inputLines = try! Utility.loadFile(named: "input03.txt")
-        let input = inputLines.joined()
-
-        // Extract all substrings between the do() and don't() operations
+    func partTwo(input: String) -> String {
         let strings = extractStringsBetweenDoAndDont(from: input)
         let transformedInput = strings.joined()
         let mulOperations = extractMulOperations(from: transformedInput)
@@ -46,10 +33,10 @@ enum DayThree {
         for operation in mulOperations {
             result += evaluateMulOperation(operation)
         }
-        print(result)
+        return "\(result)"
     }
 
-    static func extractStringsBetweenDoAndDont(from input: String) -> [String] {
+    func extractStringsBetweenDoAndDont(from input: String) -> [String] {
         enum State {
             case doFound
             case dontFound
@@ -81,6 +68,13 @@ enum DayThree {
 
         return result
     }
+
+    func test() {
+        let input = "do()123don't()456do()don't()do()don't()undo()don't()do()don't()unundo()789don't()012"
+        let result = extractStringsBetweenDoAndDont(from: input)
+        print(result)
+        assert(result == ["123", "789"])
+    }
 }
 
 fileprivate extension String {
@@ -95,16 +89,5 @@ fileprivate extension String {
             print("Invalid regex: \(error.localizedDescription)")
             return []
         }
-    }
-}
-
-// MARK: - Tests
-
-extension DayThree {
-    static func testExtractDoAndDontStrings() {
-        let input = "do()123don't()456do()don't()do()don't()undo()don't()do()don't()unundo()789don't()012"
-        let result = extractStringsBetweenDoAndDont(from: input)
-        print(result)
-        assert(result == ["123", "789"])
     }
 }

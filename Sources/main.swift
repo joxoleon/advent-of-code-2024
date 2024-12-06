@@ -3,6 +3,7 @@
 
 import Foundation
 
-DayThree.partTwo()
+let day = DayThree()
+day.test()
 
 
