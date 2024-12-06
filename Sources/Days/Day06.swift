@@ -1,12 +1,9 @@
+// Please do not look at this code, it won't make ANY SENSE!
 // https://adventofcode.com/2024/day/6
 import Foundation
 
 class DaySix: Day {
     let dayNumber: Int = 6
-
-
-
-
     func partOne(input: String) -> String {
         // Transform input into a matrix of characters
         let m = getCharacterMatrix(from: input)
@@ -17,6 +14,9 @@ class DaySix: Day {
     }
 
     func partTwo(input: String) -> String {
+        let m = getCharacterMatrix(from: input)
+        let player = Player(map: m)
+        player.runWithLoopObstacleInsertion()
         return ""
     }
 
@@ -32,7 +32,7 @@ class DaySix: Day {
 
 fileprivate let directionCharacterSet = Set<Character>(["^", ">", "v", "<"])
 
-fileprivate enum Direction {
+fileprivate enum Direction: Hashable {
     case up
     case right
     case down
@@ -93,6 +93,12 @@ fileprivate enum Direction {
     }
 }
 
+fileprivate struct VisitedStruct: Hashable {
+    let position: Position
+    let direction: Direction
+    let index: Int
+}
+
 fileprivate struct Position: Hashable {
     var i: Int
     var j: Int
@@ -112,16 +118,26 @@ fileprivate struct Position: Hashable {
 }
 
 fileprivate class Player {
+    // Initial Settings
+    let initialPosition: Position
+    let initialDirection: Direction
+    let initialMap: [[Character]]
+
+    var obstaclePositions: [Position] = []
     var position: Position
     var direction: Direction
     var map: [[Character]]
-    var visited: Set<Position>
+    var visited: Set<VisitedStruct>
+    var steps = 0
 
     init(map: [[Character]]) {
         self.map = map
         self.position = Player.findStartPosition(map: map)
         self.direction = Direction(from: map[position.i][position.j])
-        self.visited = Set<Position>([self.position])
+        self.visited = Set([VisitedStruct(position: position, direction: direction, index: -1)])
+        self.initialPosition = position
+        self.initialDirection = direction
+        self.initialMap = map
     }
 
     static func findStartPosition(map: [[Character]]) -> Position {
@@ -143,13 +159,14 @@ fileprivate class Player {
 
     func canMoveToNextPosition() -> Bool {
         let nextPosition = self.nextPosition()
-        return map[nextPosition.i][nextPosition.j] != "#"
+        return map[nextPosition.i][nextPosition.j] != "#" && map[nextPosition.i][nextPosition.j] != "O"
     }
 
     func move() {
         if canMoveToNextPosition() {
             position.move(inDirection: direction)
-            visited.insert(position)
+            steps += 1
+            visited.insert(VisitedStruct(position: position, direction: direction, index: steps ))
             map[position.i][position.j] = "x"
         } else {
             direction.rotateRight()
@@ -163,6 +180,75 @@ fileprivate class Player {
         print("Visited \(visited.count) positions")
     }
 
+    func runWithLoopObstacleInsertion() {
+        run()
+        let unorderedVisitedArray = Array(visited)
+        let visitedArrayUnfiltered = unorderedVisitedArray.sorted {
+            $0.index < $1.index
+        }
+        let visitedArray = visitedArrayUnfiltered.filter {
+            $0.index != -1
+            || ($0.position.i == initialPosition.i && $0.position.j == initialPosition.j)
+        }
+                
+        
+        var possibleObstacleCount = 0
+        for i in 0..<visitedArray.count {
+            print("Iteration \(i) from \(visitedArray.count)")
+            let visited = visitedArray[i]
+            reset()
+            // Insert an obstacle at the visited position
+            if obstaclePositions.contains(visited.position) {
+                continue
+            }
+            
+            map[visited.position.i][visited.position.j] = "O"
+            var currentVisitedSet: Set<VisitedStruct> = Set([])
+//            print("Map with Added obstacle at \(visited.position)")
+//            renderMap()
+            
+            // Keep moving until we reach the same position with the same direction
+            while !nextPosition().hasExitedMap() {
+                move()
+                if currentVisitedSet.contains(VisitedStruct(position: position, direction: direction, index: -1)) {
+                    possibleObstacleCount += 1
+                    obstaclePositions.append(visited.position)
+                    
+                    // Render map with obstacle
+//                    print("*** Map with obstacle at \(position)")
+//                    renderMap()
+                    break
+                }
+                currentVisitedSet.insert(VisitedStruct(position: position, direction: direction, index: -1))
+            }
+        }
+        print("\n\n")
+        for obstaclePosition in obstaclePositions {
+            var newMap = initialMap
+            newMap[obstaclePosition.i][obstaclePosition.j] = "O"
+            print("Obstacle set at \(obstaclePosition)")
+            // Print the entire map
+            for row in newMap {
+                print(row.map { String($0) }.joined())
+            }
+            print("\n\n")
+        }
+        print("Possible obstacle count: \(possibleObstacleCount)")
+    }
+
+    func reset() {
+        position = initialPosition
+        direction = initialDirection
+        map = initialMap
+        visited = Set([VisitedStruct(position: position, direction: direction, index: -1)])
+    }
+}
+
+
+
+// MARK: - Rendering simulation
+
+extension Player {
     func runWithRendering() {
         while !nextPosition().hasExitedMap() {
             renderMap()
@@ -177,23 +263,25 @@ fileprivate class Player {
         var currentMap = map
         currentMap[position.i][position.j] = direction.char
 
-        // Prepare the map row by row
-        let renderedRows = currentMap.map { row in
-            row.map { char in
-                if char == "x" {
-                    // Blue for visited positions
-                    return "\u{1B}[34m\(char)\u{1B}[0m"
-                } else if directionCharacterSet.contains(char) {
-                    // Green for direction characters
-                    return "\u{1B}[32m\(char)\u{1B}[0m"
-                } else {
-                    // Default color for other characters
-                    return "\(char)"
-                }
-            }.joined() // Combine characters into a single string for the row
-        }
-
-        let renderMatrix = renderedRows.joined(separator: "\n")
+//        // Prepare the map row by row - COLORED
+//        let renderedRows = currentMap.map { row in
+//            row.map { char in
+//                if char == "x" {
+//                    // Blue for visited positions
+//                    return "\u{1B}[34m\(char)\u{1B}[0m"
+//                } else if directionCharacterSet.contains(char) {
+//                    // Green for direction characters
+//                    return "\u{1B}[32m\(char)\u{1B}[0m"
+//                } else {
+//                    // Default color for other characters
+//                    return "\(char)"
+//                }
+//            }.joined() // Combine characters into a single string for the row
+//        }
+//
+//        let renderMatrix = renderedRows.joined(separator: "\n")
+        
+        let renderMatrix = currentMap.map { row in row.map { String($0) }.joined() }.joined(separator: "\n")
 
         // Clear the terminal right before printing
         print("\u{1B}[2J")
@@ -202,7 +290,6 @@ fileprivate class Player {
         print(renderMatrix)
 
         // Delay for a bit
-        usleep(25_000)
+        usleep(2_000)
     }
-
 }
