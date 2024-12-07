@@ -3,6 +3,5 @@
 
 import Foundation
 
-let day = DaySix()
-let input = day.loadInput()
-let _ = day.partTwo(input: input)
+let day = DaySeven()
+day.run()
