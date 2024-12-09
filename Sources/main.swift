@@ -3,5 +3,5 @@
 
 import Foundation
 
-let day = DayEight()
+let day = DayNine()
 day.run()
