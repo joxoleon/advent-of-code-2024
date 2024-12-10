@@ -4,6 +4,8 @@ import Foundation
 
 class DaySix: Day {
     let dayNumber: Int = 6
+    let year = 2024
+    
     func partOne(input: String) -> String {
         // Transform input into a matrix of characters
         let m = getCharacterMatrix(from: input)

@@ -3,6 +3,7 @@ import Foundation
 
 class DayEight: Day {
     let dayNumber = 8
+    let year = 2024
 
     // MARK: - Part One
 

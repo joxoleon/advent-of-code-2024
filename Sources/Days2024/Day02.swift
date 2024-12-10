@@ -2,8 +2,9 @@
 import Foundation
 
 class DayTwo: Day {
-    var dayNumber: Int = 2
-
+    let dayNumber: Int = 2
+    let year = 2024
+    
     func partOne(input: String) -> String {
         let inputLines = input.split(separator: "\n").map { String($0) }
 

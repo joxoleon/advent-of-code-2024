@@ -18,6 +18,7 @@ extension DayNine {
 
 class DayNine: Day {
     let dayNumber = 9
+    let year = 2024
 
     // MARK: - Part One
     func partOne(input: String) -> String {

@@ -3,6 +3,8 @@ import Foundation
 
 class DayEight2020: Day {
     let dayNumber = 9
+    let year = 2020
+    
     var accumulator = 0
     var instructionPointer = 0
     var visitedInstructions: Set<Int> = []

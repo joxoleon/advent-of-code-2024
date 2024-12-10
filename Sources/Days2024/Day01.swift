@@ -2,7 +2,9 @@
 import Foundation
 
 class DayOne: Day {
-    var dayNumber: Int = 1
+    let dayNumber: Int = 1
+    let year = 2024
+
 
     func partOne(input: String) -> String {
         let inputLines = input.split(separator: "\n").map { String($0) }

@@ -3,7 +3,8 @@ import Foundation
 
 class DayFour: Day {
     let dayNumber = 4
-
+    let year = 2024
+    
     func partOne(input: String) -> String {
         // Transform input into a matrix of characters
         let cm = DayFour.getCharacterMatrix(from: input)

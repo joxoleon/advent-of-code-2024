@@ -2,8 +2,9 @@
 import Foundation
 
 class DayThree: Day {
-    var dayNumber: Int = 3
-
+    let dayNumber: Int = 3
+    let year = 2024
+    
     func partOne(input: String) -> String {
         var result: Int128 = 0
         let mulOperations = extractMulOperations(from: input)

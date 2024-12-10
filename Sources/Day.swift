@@ -2,6 +2,7 @@ import Foundation
 
 public protocol Day {
     var dayNumber: Int { get }
+    var year: Int { get }
 
     func partOne(input: String) -> String
     func partTwo(input: String) -> String
@@ -15,7 +16,7 @@ extension Day {
     }
 
     public func loadInput() -> String {
-        let basePath = "/Users/jovanradivojsa/Desktop/workspace/advent-of-code/advent-of-code-2024"
+        let basePath = "/Users/jovanradivojsa/Desktop/workspace/advent-of-code/advent-of-code-2024/Input/\(year)"
         let path = "\(basePath)/\(inputFileName)"
         return try! String(contentsOfFile: path, encoding: .utf8)
     }

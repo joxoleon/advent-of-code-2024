@@ -1,8 +1,9 @@
 // https://adventofcode.com/2020/day/7
 import Foundation
 
-class DaySevenImproved: Day {
+class DaySeven: Day {
     let dayNumber = 7
+    let year = 2024
     
     func partOne(input: String) -> String {
         let inputs = input.components(separatedBy: "\n").filter { $0.isEmpty == false }

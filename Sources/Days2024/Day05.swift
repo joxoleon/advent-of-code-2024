@@ -3,6 +3,7 @@ import Foundation
 
 class DayFive: Day {
     let dayNumber = 5
+    let year = 2024
 
     func partOne(input: String) -> String {
         let (rules, updates) = processInput(input: input)
