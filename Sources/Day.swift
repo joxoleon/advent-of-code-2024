@@ -25,12 +25,12 @@ extension Day {
         let input = loadInput()
         let partOneStartTime = Date()
         let partOneResult = partOne(input: input)
-        let partOneElapsedTimeInterval = Date().timeIntervalSince(partOneStartTime) / 1000
-        print("Day \(dayNumber) - Part One: \(partOneResult) - Elapsed Time: \(partOneElapsedTimeInterval)ms")
+        let partOneElapsedTimeInterval = Date().timeIntervalSince(partOneStartTime)
+        print("Day \(dayNumber) - Part One: \(partOneResult) - Elapsed Time: \(partOneElapsedTimeInterval)s")
 
         let partTwoStartTime = Date()
         let partTwoResult = partTwo(input: input)
-        let partTwoElapsedTimeInterval = Date().timeIntervalSince(partTwoStartTime) / 1000
-        print("Day \(dayNumber) - Part Two: \(partTwoResult) - Elapsed Time: \(partTwoElapsedTimeInterval)ms")
+        let partTwoElapsedTimeInterval = Date().timeIntervalSince(partTwoStartTime)
+        print("Day \(dayNumber) - Part Two: \(partTwoResult) - Elapsed Time: \(partTwoElapsedTimeInterval)s")
     }
 }
