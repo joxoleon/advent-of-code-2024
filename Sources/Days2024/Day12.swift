@@ -5,99 +5,102 @@ class DayTwelve: Day {
     let dayNumber: Int = 12
     let year: Int = 2024
 
-    // MARK: - Types
-    nonisolated(unsafe) static var visited: Set<Position> = []
-
     struct Position: Hashable {
         let i: Int
         let j: Int
-
     }
 
-    static func adjacentNeighborCount(for position: Position, in map: [[Character]]) -> Int {
-        let directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        var count = 0
-        for direction in directions {
-            let i = position.i + direction.0
-            let j = position.j + direction.1
-            if i >= 0 && i < map.count && j >= 0 && j < map[i].count {
-                if map[i][j] == map[position.i][position.j] {
-                    count += 1
+    enum Direction: Int, Hashable {
+        case left = 0
+        case top
+        case right
+        case bottom
+    }
+
+    class Tile: Hashable, Equatable {
+        let type: Character
+        var perimeters: [Bool] = [false, false, false, false] // left, top, right, bottom
+        var isPartOfSegment = false
+    
+        init(_ char: Character) {
+            self.type = char
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(type)
+            hasher.combine(perimeters)
+        }
+    
+        static func == (lhs: Tile, rhs: Tile) -> Bool {
+            return lhs.type == rhs.type
+        }
+    
+        func populatePerimeters(_ position: Position, _ map: inout [[Tile]], perimeters: inout [Bool]) {
+            let directions = [(0, -1), (-1, 0), (0, 1), (1, 0)] // left, top, right, bottom
+            let (i, j) = (position.i, position.j)
+            
+            for (index, direction) in directions.enumerated() {
+                let newI = i + direction.0
+                let newJ = j + direction.1
+                
+                if newI < 0 || newI >= map.count || newJ < 0 || newJ >= map[i].count || map[newI][newJ] != map[i][j] {
+                    perimeters[index] = true
                 }
             }
         }
-        return count
+
+        var perimiterCount: Int {
+            return perimeters.filter { $0 }.count
+        }
     }
 
-    struct GardenSegment: Hashable {
+    static func getNeighborAdjacentTypeOfSameType(tiles: [[Tile]], position: Position, direction: Direction) -> Tile? {
+        let (i, j) = (position.i, position.j)
+        let currentTile = tiles[i][j]
+        
+        switch direction {
+        case .left:
+            if j - 1 >= 0 && tiles[i][j - 1].type == currentTile.type {
+                return tiles[i][j - 1]
+            }
+        case .top:
+            if i - 1 >= 0 && tiles[i - 1][j].type == currentTile.type {
+                return tiles[i - 1][j]
+            }
+        case .right:
+            if j + 1 < tiles[i].count && tiles[i][j + 1].type == currentTile.type {
+                return tiles[i][j + 1]
+            }
+        case .bottom:
+            if i + 1 < tiles.count && tiles[i + 1][j].type == currentTile.type {
+                return tiles[i + 1][j]
+            }
+        }
+        return nil
+    }
+
+    class GardenSegment {
 
         // MARK: - Properties
         let positions: [Position]
-        let map: [[Character]]
+        let tiles: [[Tile]]
 
-        var area: Int {
-            return positions.count
-        }
+        var area: Int { return positions.count }
 
         var perimeter: Int {
-            var result = 0
+            var perimiterSum = 0
             for position in positions {
-                result += 4 - DayTwelve.adjacentNeighborCount(for: position, in: map)
+                perimiterSum += tiles[position.i][position.j].perimiterCount
             }
-            return result
+            return perimiterSum
         }
 
         var price: Int {
+            printSegment()
             return area * perimeter
         }
 
-        var letter: String {
-            return String(map[positions.first!.i][positions.first!.j])
-        }
-
-        var outerSideCount: Int {
-            let sideWalker = SideWalker(area: self)
-            return sideWalker.outerSideCount()
-        }
-
-
-        var ifSubmoduleRandomParentPosition: Position? {
-            // It cant' be a subsegment if it's on the edge
-            let minI = positions.map { $0.i }.min()!
-            let maxI = positions.map { $0.i }.max()!
-            guard minI >= 1 && maxI < map.count - 1 else {
-                return nil
-            }
-            let minJ = positions.map { $0.j }.min()!
-            let maxJ = positions.map { $0.j }.max()!
-            guard minJ >= 1 && maxJ < map[minI].count - 1 else {
-                return nil
-            }
-            var randomParentPosition: Position? = nil
-
-            // Check if every surrounding tile is the same
-            var allTouchedTileLetters: Set<Character> = []
-            let directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-            for position in positions {
-                for direction in directions {
-                    let i = position.i + direction.0
-                    let j = position.j + direction.1
-                    if letter != String(map[i][j]) {
-                        allTouchedTileLetters.insert(map[i][j])
-                        if randomParentPosition == nil {
-                            randomParentPosition = Position(i: i, j: j)
-                        }
-                    }
-                }
-            }
-
-            if allTouchedTileLetters.count == 1 {
-                return randomParentPosition
-            }
-            return nil
-        }
-
-        init(position: Position, map: [[Character]]) {
+        init(position: Position, tiles: [[Tile]]) {
             var positions: [Position] = []
             var visited: [Position] = []
             var queue: [Position] = [position]
@@ -112,152 +115,115 @@ class DayTwelve: Day {
                 for direction in directions {
                     let i = current.i + direction.0
                     let j = current.j + direction.1
-                    if i >= 0 && i < map.count && j >= 0 && j < map[i].count {
-                        if map[i][j] == map[position.i][position.j] {
+                    if i >= 0 && i < tiles.count && j >= 0 && j < tiles[i].count {
+                        if tiles[i][j] == tiles[position.i][position.j] {
                             queue.append(Position(i: i, j: j))
                         }
                     }
                 }
             }
             self.positions = positions
-            self.map = map
-            // With this done, the main iteration is going to be a piece of cake
-            populateGlobalVisited()
-        }
-
-        func populateGlobalVisited() {
+            self.tiles = tiles
+            
             for position in positions {
-                DayTwelve.visited.insert(position)
+                tiles[position.i][position.j].isPartOfSegment = true
             }
         }
 
-        func isInArea(_ position: Position) -> Bool {
-            return positions.contains(position)
-        }
-
-        func partTwoPrice() -> Int {
-            return area * outerSideCount 
-        }
-
-        func printSegmentDetails() {
-            let letter = String(map[positions.first!.i][positions.first!.j])
-            print(" Segment letter: \(letter), outer side count: \(outerSideCount), area: \(area), perimeter: \(perimeter), price: \(price), partTwoPrice: \(partTwoPrice())")
-        }
-    }
-
-    enum Direction: Int {
-        case right = 0
-        case up
-        case left
-        case down
-
-        func turnLeft() -> Direction {
-            Direction(rawValue: (self.rawValue + 1) % 4)!
-        }
-
-        func turnRight() -> Direction {
-            Direction(rawValue: (self.rawValue + 3) % 4)!
-        }
-
-        var dPosition: (Int, Int) {
-            switch self {
-            case .right:
-                return (0, 1)
-            case .up:
-                return (-1, 0)
-            case .left:
-                return (0, -1)
-            case .down:
-                return (1, 0)
-            }
-        }
-    }
-    
-    struct MovementPosition: Hashable {
-        let position: Position
-        let direction: Direction
-    }
-
-    class SideWalker {
-        let map: [[Character]]
-        let area: GardenSegment
-        var position: Position
-        var direction = Direction.right
-        var visited: Set<MovementPosition> = []
-
-        init(area: GardenSegment) {
-            self.area = area
-            self.map = area.map
-            self.position = area.positions.first!
-        }
-
-        func canMoveToTile(direction: Direction) -> Bool {
-            let i = position.i + direction.dPosition.0
-            let j = position.j + direction.dPosition.1
-            return area.isInArea(Position(i: i, j: j)) && !visited.contains(MovementPosition(position: Position(i: i, j: j), direction: direction))
-        }
-
-        func move() {
-            position = Position(i: position.i + direction.dPosition.0, j: position.j + direction.dPosition.1)
-        }
-
-        func outerSideCount() -> Int {
-            // Move on those edges and keep on turnin':
-            // 1. If can turn left, do it
-            // 2. If can go straight, do it
-            // 3. Turn right by default
-            // Count sides on each turn
-            var count = 0
-            visited.insert(MovementPosition(position: position, direction: direction)) // Initial one
-            while true {
-                if canMoveToTile(direction: direction.turnLeft()) { // Left
-                    direction = direction.turnLeft()
-                    count += 1
-                    visited.insert(MovementPosition(position: position, direction: direction))
-                    if canMoveToTile(direction: direction) {
-                        move()
-                    }
-                } else if canMoveToTile(direction: direction) { // Straight
-                    move()
+        func getContiguousPositionSegments(row: Int) -> [[Position]] {
+            var filteredPos = positions.filter { $0.i == row }
+            var contiguousPositions: [[Position]] = []
+            var currentLine: [Position] = []
+            
+            while !filteredPos.isEmpty {
+                let current = filteredPos.removeFirst()
+                if currentLine.isEmpty {
+                    currentLine.append(current)
                 } else {
-                    direction = direction.turnRight()
-                    count += 1
+                    let last = currentLine.last!
+                    if last.j + 1 == current.j {
+                        currentLine.append(current)
+                    } else {
+                        contiguousPositions.append(currentLine)
+                        currentLine = [current]
+                    }
                 }
-                
-                let movementPosition = MovementPosition(position: position, direction: direction)
-                if visited.contains(movementPosition) {
-                    break
-                }
-                visited.insert(movementPosition)
             }
-
-            return count
+            
+            // Append the last segment if it exists
+            if !currentLine.isEmpty {
+                contiguousPositions.append(currentLine)
+            }
+        
+            return contiguousPositions
         }
 
+        func getContiguousPositionSegments(column: Int) -> [[Position]] {
+            var filteredPos = positions.filter { $0.j == column }
+            var contiguousPositions: [[Position]] = []
+            var currentLine: [Position] = []
+            
+            while !filteredPos.isEmpty {
+                let current = filteredPos.removeFirst()
+                if currentLine.isEmpty {
+                    currentLine.append(current)
+                } else {
+                    let last = currentLine.last!
+                    if last.i + 1 == current.i {
+                        currentLine.append(current)
+                    } else {
+                        contiguousPositions.append(currentLine)
+                        currentLine = [current]
+                    }
+                }
+            }
+            
+            // Append the last segment if it exists
+            if !currentLine.isEmpty {
+                contiguousPositions.append(currentLine)
+            }
+        
+            return contiguousPositions
+        }
+
+        func printSegment() {
+            let letter = tiles[positions.first!.i][positions.first!.j].type
+            print("Segment of \(letter) with area: \(area), perimeter: \(perimeter) and price: \(area * perimeter)")
+        }
     }
+
 
     // MARK: - Part One
 
     func partOne(input: String) -> String {
-        let matrix: [[Character]] = input.components(separatedBy: .newlines).map {
-            Array(String($0))
-        }
+        var tiles: [[Tile]] = input.components(separatedBy: .newlines)
+        .map { Array(String($0)) }
+        .map { $0.map { Tile($0) } }
+
         // Create areas
-        var areas: [GardenSegment] = []
-        for i in matrix.indices {
-            for j in matrix.indices {
+        var segments: [GardenSegment] = []
+        for i in tiles.indices {
+            for j in tiles.indices {
                 let position = Position(i: i, j: j)
-                if !DayTwelve.visited.contains(position) {
-                    let area = GardenSegment(position: position, map: matrix)
-                    areas.append(area)
+                if tiles[i][j].isPartOfSegment == false {
+                    let segment = GardenSegment(position: position, tiles: tiles)
+                    segments.append(segment)
                 }
             }
         }
 
-        var price = 0
-        for area in areas {
-            price += area.price
+        print("Segments: \(segments.count)")
+
+        // Populate perimeters
+        for i in tiles.indices {
+            for j in tiles.indices {
+                tiles[i][j].populatePerimeters(Position(i: i, j: j), &tiles, perimeters: &tiles[i][j].perimeters)
+            }
         }
+
+        printTileMatrix(tiles: tiles)
+
+        let price = segments.reduce(0) { $0 + $1.price }
 
         return "Total price: \(price)"
     }
@@ -265,46 +231,116 @@ class DayTwelve: Day {
     // MARK: - Part Two
 
     func partTwo(input: String) -> String {
-        // Clear global visited
-        DayTwelve.visited = []
+var tiles: [[Tile]] = input.components(separatedBy: .newlines)
+        .map { Array(String($0)) }
+        .map { $0.map { Tile($0) } }
 
-        let matrix: [[Character]] = input.components(separatedBy: .newlines).map {
-            Array(String($0))
-        }
-
-        // Create segments
+        // Create areas
         var segments: [GardenSegment] = []
-        for i in matrix.indices {
-            for j in matrix.indices {
+        for i in tiles.indices {
+            for j in tiles.indices {
                 let position = Position(i: i, j: j)
-                if !DayTwelve.visited.contains(position) {
-                    let segment = GardenSegment(position: position, map: matrix)
+                if tiles[i][j].isPartOfSegment == false {
+                    let segment = GardenSegment(position: position, tiles: tiles)
                     segments.append(segment)
                 }
             }
         }
 
-
-        var partTwoPrice = 0
-        for segment in segments {
-            partTwoPrice += segment.partTwoPrice()
-            // segment.printSegmentDetails()
+        // Populate perimeters
+        for i in tiles.indices {
+            for j in tiles.indices {
+                tiles[i][j].populatePerimeters(Position(i: i, j: j), &tiles, perimeters: &tiles[i][j].perimeters)
+            }
         }
 
-        // Handle subsegments
+        printTileMatrix(tiles: tiles)
+
+        // Remove contiguous perimiters (so that each perimiter is counted as a line)
         for segment in segments {
-            guard let parentPosition = segment.ifSubmoduleRandomParentPosition else {
-                continue
+            let minI = segment.positions.map { $0.i }.min()!
+            let maxI = segment.positions.map { $0.i }.max()!
+            let minJ = segment.positions.map { $0.j }.min()!
+            let maxJ = segment.positions.map { $0.j }.max()!
+
+
+            // Remove top and bottom perimeters
+            for i in minI...maxI {
+                let contiguousPositionSegments = segment.getContiguousPositionSegments(row: i)
+                for contiguousPositions in contiguousPositionSegments {
+                    var shouldRemoveTop = false
+                    var shouldRemoveBottom = false
+                    for position in contiguousPositions {
+                        if shouldRemoveTop {
+                            tiles[position.i][position.j].perimeters[1] = false
+                        }
+                        if shouldRemoveBottom {
+                            tiles[position.i][position.j].perimeters[3] = false
+                        }
+                        shouldRemoveTop = shouldRemoveTop || tiles[position.i][position.j].perimeters[1]
+                        shouldRemoveBottom = shouldRemoveBottom || tiles[position.i][position.j].perimeters[3]
+                    }
+                }
             }
 
-            let parentSegment = segments.first { $0.isInArea(parentPosition) }!
-            partTwoPrice += segment.outerSideCount * parentSegment.area
+            // Remove left and right perimeters
+            for j in minJ...maxJ {
+                let contiguousPositionSegments = segment.getContiguousPositionSegments(column: j)
+                for contiguousPositions in contiguousPositionSegments {
+                    var shouldRemoveLeft = false
+                    var shouldRemoveRight = false
+                    for position in contiguousPositions {
+                        if shouldRemoveLeft {
+                            tiles[position.i][position.j].perimeters[0] = false
+                        }
+                        if shouldRemoveRight {
+                            tiles[position.i][position.j].perimeters[2] = false
+                        }
+                        shouldRemoveLeft = shouldRemoveLeft || tiles[position.i][position.j].perimeters[0]
+                        shouldRemoveRight = shouldRemoveRight || tiles[position.i][position.j].perimeters[2]
+                    }
+                }
+            }
         }
 
+        print("")
+        printTileMatrix(tiles: tiles)
+        print("")
+
+        let partTwoPrice = segments.reduce(0) { $0 + $1.price }
         return "Part Two price: \(partTwoPrice)"
     }
+
+
 
     // MARK: - Testing
 
     func test() {}
+
+
+    func printTileMatrix(tiles: [[Tile]]) {
+        for i in tiles.indices {
+            // Print top perimeters
+            for j in tiles[i].indices {
+                let top = tiles[i][j].perimeters[1] ? "─" : " "
+                print(" \(top) ", terminator: "")
+            }
+            print()
+            
+            // Print left perimeters and tile types
+            for j in tiles[i].indices {
+                let left = tiles[i][j].perimeters[0] ? "│" : " "
+                print("\(left)\(tiles[i][j].type)", terminator: "")
+            }
+            // Print right perimeter of the last tile in the row
+            print(tiles[i].last!.perimeters[2] ? "│" : " ")
+            
+            // Print bottom perimeters
+            for j in tiles[i].indices {
+                let bottom = tiles[i][j].perimeters[3] ? "─" : " "
+                print(" \(bottom) ", terminator: "")
+            }
+            print()
+        }
+    }
 }
