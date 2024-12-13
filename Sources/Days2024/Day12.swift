@@ -1,7 +1,8 @@
 // https://adventofcode.com/2024/day/12
 import Foundation
+import SwiftTerm
 
-class DayTwelve: Day {
+class DayTwelve: @preconcurrency Day {
     let dayNumber: Int = 12
     let year: Int = 2024
 
@@ -96,7 +97,7 @@ class DayTwelve: Day {
         }
 
         var price: Int {
-            printSegment()
+            // printSegment()
             return area * perimeter
         }
 
@@ -131,7 +132,7 @@ class DayTwelve: Day {
         }
 
         func getContiguousPositionSegments(row: Int) -> [[Position]] {
-            var filteredPos = positions.filter { $0.i == row }
+            var filteredPos = positions.filter { $0.i == row }.sorted { $0.j < $1.j }
             var contiguousPositions: [[Position]] = []
             var currentLine: [Position] = []
             
@@ -159,7 +160,7 @@ class DayTwelve: Day {
         }
 
         func getContiguousPositionSegments(column: Int) -> [[Position]] {
-            var filteredPos = positions.filter { $0.j == column }
+            var filteredPos = positions.filter { $0.j == column }.sorted { $0.i < $1.i }
             var contiguousPositions: [[Position]] = []
             var currentLine: [Position] = []
             
@@ -212,7 +213,7 @@ class DayTwelve: Day {
             }
         }
 
-        print("Segments: \(segments.count)")
+        // print("Segments: \(segments.count)")
 
         // Populate perimeters
         for i in tiles.indices {
@@ -221,8 +222,6 @@ class DayTwelve: Day {
             }
         }
 
-        printTileMatrix(tiles: tiles)
-
         let price = segments.reduce(0) { $0 + $1.price }
 
         return "Total price: \(price)"
@@ -230,8 +229,8 @@ class DayTwelve: Day {
 
     // MARK: - Part Two
 
-    func partTwo(input: String) -> String {
-var tiles: [[Tile]] = input.components(separatedBy: .newlines)
+    @MainActor func partTwo(input: String) -> String {
+        var tiles: [[Tile]] = input.components(separatedBy: .newlines)
         .map { Array(String($0)) }
         .map { $0.map { Tile($0) } }
 
@@ -254,7 +253,7 @@ var tiles: [[Tile]] = input.components(separatedBy: .newlines)
             }
         }
 
-        printTileMatrix(tiles: tiles)
+        TileMatrixVisualizer.visualize(tiles: tiles)
 
         // Remove contiguous perimiters (so that each perimiter is counted as a line)
         for segment in segments {
@@ -271,6 +270,14 @@ var tiles: [[Tile]] = input.components(separatedBy: .newlines)
                     var shouldRemoveTop = false
                     var shouldRemoveBottom = false
                     for position in contiguousPositions {
+                        if tiles[position.i][position.j].perimeters[1] == false {
+                            shouldRemoveTop = false
+                        }
+                        
+                        if tiles[position.i][position.j].perimeters[3] == false {
+                            shouldRemoveBottom = false
+                        }
+                            
                         if shouldRemoveTop {
                             tiles[position.i][position.j].perimeters[1] = false
                         }
@@ -290,6 +297,14 @@ var tiles: [[Tile]] = input.components(separatedBy: .newlines)
                     var shouldRemoveLeft = false
                     var shouldRemoveRight = false
                     for position in contiguousPositions {
+                        if tiles[position.i][position.j].perimeters[0] == false {
+                            shouldRemoveLeft = false
+                        }
+                        
+                        if tiles[position.i][position.j].perimeters[2] == false {
+                            shouldRemoveRight = false
+                        }
+                        
                         if shouldRemoveLeft {
                             tiles[position.i][position.j].perimeters[0] = false
                         }
@@ -303,9 +318,9 @@ var tiles: [[Tile]] = input.components(separatedBy: .newlines)
             }
         }
 
-        print("")
-        printTileMatrix(tiles: tiles)
-        print("")
+        // print("")
+        // TileMatrixVisualizer.visualize(tiles: tiles)
+        // print("")
 
         let partTwoPrice = segments.reduce(0) { $0 + $1.price }
         return "Part Two price: \(partTwoPrice)"
@@ -316,31 +331,4 @@ var tiles: [[Tile]] = input.components(separatedBy: .newlines)
     // MARK: - Testing
 
     func test() {}
-
-
-    func printTileMatrix(tiles: [[Tile]]) {
-        for i in tiles.indices {
-            // Print top perimeters
-            for j in tiles[i].indices {
-                let top = tiles[i][j].perimeters[1] ? "─" : " "
-                print(" \(top) ", terminator: "")
-            }
-            print()
-            
-            // Print left perimeters and tile types
-            for j in tiles[i].indices {
-                let left = tiles[i][j].perimeters[0] ? "│" : " "
-                print("\(left)\(tiles[i][j].type)", terminator: "")
-            }
-            // Print right perimeter of the last tile in the row
-            print(tiles[i].last!.perimeters[2] ? "│" : " ")
-            
-            // Print bottom perimeters
-            for j in tiles[i].indices {
-                let bottom = tiles[i][j].perimeters[3] ? "─" : " "
-                print(" \(bottom) ", terminator: "")
-            }
-            print()
-        }
-    }
 }
