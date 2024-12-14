@@ -7,7 +7,6 @@ public protocol Day {
     func partOne(input: String) -> String
     func partTwo(input: String) -> String
     func run()
-    func test()
 }
 
 extension Day {
