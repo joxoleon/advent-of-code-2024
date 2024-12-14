@@ -121,12 +121,13 @@ class DayFourteen: Day {
         let lines = input.components(separatedBy: .newlines)
         let robots = lines.map { parseLine(line: $0) }
 
-        var minimumManhattanDistance = Int.max
         for secoundCounter in 0...10000 {
-            let manhattanDistance = totalManhattanDistance(robots: robots)
-            if manhattanDistance < minimumManhattanDistance {
-                minimumManhattanDistance = manhattanDistance
-                print("Minimum manhattan distance: \(minimumManhattanDistance)")
+            if secoundCounter % 100 == 0 {
+                print("Second: \(secoundCounter)")
+            }
+            let uniqueRobotPositions = Set(robots.map { $0.p })
+
+            if uniqueRobotPositions.count == robots.count {
                 print("Second: \(secoundCounter)")
                 render(robots: robots)
             }
