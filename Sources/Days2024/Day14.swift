@@ -5,11 +5,11 @@ class DayFourteen: Day {
     let dayNumber: Int = 14
     let year: Int = 2024
 
-    static let width = 11
-    static let height = 7
+    static let width = 101
+    static let height = 103
     static let seconds = 100
 
-    struct Position {
+    struct Position: Hashable {
         let x: Int
         let y: Int
 
@@ -32,11 +32,17 @@ class DayFourteen: Day {
         }
 
         static func + (lhs: Position, rhs: Position) -> Position {
-            return Position(x: (lhs.x + rhs.x) % DayFourteen.width, y: (lhs.y + rhs.y) % DayFourteen.height)
+            let newX = (lhs.x + rhs.x) % DayFourteen.width
+            let newY = (lhs.y + rhs.y) % DayFourteen.height
+            return Position(x: newX < 0 ? newX + DayFourteen.width : newX, y: newY < 0 ? newY + DayFourteen.height : newY)
         }
 
         static func * (lhs: Position, rhs: Int) -> Position {
             return Position(x: (lhs.x * rhs) % DayFourteen.width, y: (lhs.y * rhs) % DayFourteen.height)
+        }
+
+        static func manhattanDistance(lhs: Position, rhs: Position) -> Int {
+            return abs(lhs.x - rhs.x) + abs(lhs.y - rhs.y)
         }
     }
 
@@ -65,9 +71,6 @@ class DayFourteen: Day {
         let lines = input.components(separatedBy: .newlines)
         let robots = lines.map { parseLine(line: $0) }
 
-        // Render initial state
-        render(robots: robots)
-
         // Move for seconds
         for robot in robots {
             robot.move(for: DayFourteen.seconds)
@@ -78,9 +81,6 @@ class DayFourteen: Day {
                 result[quadrant, default: 0] += 1
             }
         }
-
-        // Render final state
-        render(robots: robots)
 
         print(quadrantCountMap)
 
@@ -94,11 +94,6 @@ class DayFourteen: Day {
         let p = parts[0].components(separatedBy: "=")[1].components(separatedBy: ",")
         let v = parts[1].components(separatedBy: "=")[1].components(separatedBy: ",")
         return Robot(p: Position(x: Int(p[0])!, y: Int(p[1])!), v: Position(x: Int(v[0])!, y: Int(v[1])!))
-    }
-
-    // MARK: - Part Two
-    func partTwo(input: String) -> String {
-        return ""
     }
 
     // Utility fuction to render matrix with robots on it:
@@ -118,6 +113,41 @@ class DayFourteen: Day {
         print("***** Robot positions *****\n")
         print(stringMatrix)
         print("\n")
+    }
+
+
+    // MARK: - Part Two
+    func partTwo(input: String) -> String {
+        let lines = input.components(separatedBy: .newlines)
+        let robots = lines.map { parseLine(line: $0) }
+
+        var minimumManhattanDistance = Int.max
+        for secoundCounter in 0...10000 {
+            let manhattanDistance = totalManhattanDistance(robots: robots)
+            if manhattanDistance < minimumManhattanDistance {
+                minimumManhattanDistance = manhattanDistance
+                print("Minimum manhattan distance: \(minimumManhattanDistance)")
+                print("Second: \(secoundCounter)")
+                render(robots: robots)
+            }
+
+            for robot in robots {
+                robot.move()
+            }
+        }
+
+        return "DONE"
+    }
+
+    func totalManhattanDistance(robots: [Robot]) -> Int {
+        var totalDistance = 0
+        for i in 0..<robots.count {
+            for j in i+1..<robots.count {
+                let distance = Position.manhattanDistance(lhs: robots[i].p, rhs: robots[j].p)
+                totalDistance += distance
+            }
+        }
+        return totalDistance
     }
 
 }
