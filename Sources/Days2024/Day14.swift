@@ -65,6 +65,9 @@ class DayFourteen: Day {
         let lines = input.components(separatedBy: .newlines)
         let robots = lines.map { parseLine(line: $0) }
 
+        // Render initial state
+        render(robots: robots)
+
         // Move for seconds
         for robot in robots {
             robot.move(for: DayFourteen.seconds)
@@ -75,6 +78,9 @@ class DayFourteen: Day {
                 result[quadrant, default: 0] += 1
             }
         }
+
+        // Render final state
+        render(robots: robots)
 
         print(quadrantCountMap)
 
@@ -97,15 +103,21 @@ class DayFourteen: Day {
 
     // Utility fuction to render matrix with robots on it:
     func render(robots: [Robot]) {
+
         var matrix = Array(repeating: Array(repeating: 0, count: DayFourteen.width), count: DayFourteen.height)
         for robot in robots {
             matrix[robot.p.y][robot.p.x] += 1
         }
 
-        // Print in a way tha 0 are replaced with "."
-        for row in matrix {
-            print(row.map { $0 == 0 ? "." : String($0) })
-        }
+        let stringMatrix = matrix.map { row in
+            row.map { cell in
+                cell == 0 ? "." : "\(cell)"
+            }.joined(separator: "")
+        }.joined(separator: "\n")
+
+        print("***** Robot positions *****\n")
+        print(stringMatrix)
+        print("\n")
     }
 
 }
