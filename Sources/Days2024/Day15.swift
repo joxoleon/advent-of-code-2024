@@ -19,7 +19,7 @@ class DayFifteen: Day {
         var result = 0
         for i in m.indices {
             for j in m[i].indices {
-                if m[i][j] == "O" {
+                if m[i][j] == "O" || m[i][j] == "[" {
                     result += i * 100 + j
                 }
             }
@@ -33,7 +33,7 @@ class DayFifteen: Day {
     }
 
     func debugPrintMatrix(rp: Util.Position, cmd: Character, m: [[Character]]) {
-        print("Current rp: \(rp) executed command: \(cmd)")
+        print("Current rp: \(rp) executing command: \(cmd)")
         renderMatrix(m: m)
     }
 
@@ -90,8 +90,34 @@ class DayFifteen: Day {
 
     // MARK: - Part Two
     func partTwo(input: String) -> String {
-        
-        return ""
+        var (m, commands) = parseInput(input: input)
+        // Expand the matrix by double vertically, by the following rules
+        // . -> ..
+        // O -> []
+        // # -> ##
+        // @ -> @.
+        m = m.map { row in
+            row.flatMap { 
+            $0 == "." ? [".", "."] : 
+            $0 == "O" ? ["[", "]"] : 
+            $0 == "#" ? ["#", "#"] : 
+            ["@", "."]
+            }
+        }
+        var rp: Util.Position = m.enumerated().compactMap { (i, row) in row.firstIndex(of: "@").map { Util.Position(i, $0) } }.first!
+
+        // start executing commands
+        for cmd in commands {
+            // debugPrintMatrix(rp: rp, cmd: cmd, m: m)
+            if Util.Position.canMoveInDirectionRecursive(Util.Direction(cmd), pos: rp, m: m) {
+                var visited: Set<Util.Position> = []
+                Util.Position.moveRecursively(Util.Direction(cmd), pos: rp, m: &m, visited: &visited)
+                rp += Util.Direction(cmd).dPos()
+            }
+
+        }
+
+        return "\(computeGpsCoordinateOfBoxes(m: m))"
     }
 
 }
@@ -100,6 +126,56 @@ fileprivate extension Util.Position {
     func canMoveInDirection(_ dir: Util.Direction, m: [[Character]]) -> Bool {
         let newPos = Util.Position(i + dir.dPos().i, j + dir.dPos().j)
         return newPos.isInBounds(Util.GridConstraints(rows: m.count, cols: m[0].count))
+    }
+
+    static func canMoveInDirectionRecursive(_ dir: Util.Direction, pos: Util.Position, m: [[Character]]) -> Bool {
+        let newPos = Util.Position(pos.i + dir.dPos().i, pos.j + dir.dPos().j)
+        guard newPos.isInBounds(Util.GridConstraints(rows: m.count, cols: m[0].count)) else { return false }
+        if newPos.isEmpty(m) { return true }
+        if newPos.isWall(m) { return false }
+
+        var positionsToVisit: [Util.Position] = [newPos]
+        if m[newPos.i][newPos.j] == "[" && (dir == .up || dir == .down) {
+            positionsToVisit.append(Util.Position(newPos.i, newPos.j + 1))
+        } else if m[newPos.i][newPos.j] == "]" && (dir == .up || dir == .down) {
+            positionsToVisit.append(Util.Position(newPos.i, newPos.j - 1))
+        }
+
+        let result = positionsToVisit.allSatisfy { canMoveInDirectionRecursive(dir, pos: $0, m: m) }
+        return result
+    }
+
+    static func moveRecursively(_ dir: Util.Direction, pos: Util.Position, m: inout [[Character]], visited: inout Set<Util.Position>) {
+        if visited.contains(pos) { return }
+        visited.insert(pos)
+    
+        let nextPos = Util.Position(pos.i + dir.dPos().i, pos.j + dir.dPos().j)
+    
+        // Check if the current position is a wall - just in case so that I know I'm not doing anything wrong
+        if pos.isWall(m) { 
+            assertionFailure("Current position is a wall") 
+            return
+        }
+    
+        // Handle movement for both player and boxes
+        if nextPos.isBox(m) {
+            var toMove = [nextPos]
+            if m[nextPos.i][nextPos.j] == "[" && (dir == .up || dir == .down) {
+                toMove.append(Util.Position(nextPos.i, nextPos.j + 1))
+            } else if m[nextPos.i][nextPos.j] == "]" && (dir == .up || dir == .down) {
+                toMove.append(Util.Position(nextPos.i, nextPos.j - 1))
+            }
+            for b in toMove {
+                moveRecursively(dir, pos: b, m: &m, visited: &visited)
+            }
+        } else if nextPos.isWall(m) {
+            assertionFailure("Next position is a wall")
+            return
+        }
+    
+        // Move the entity (player or box) to the next position
+        m[nextPos.i][nextPos.j] = m[pos.i][pos.j]
+        m[pos.i][pos.j] = "."
     }
 
     func isEmpty(_ m: [[Character]]) -> Bool {
@@ -111,7 +187,7 @@ fileprivate extension Util.Position {
     }
 
     func isBox(_ m: [[Character]]) -> Bool {
-        return m[i][j] == "O"
+        return m[i][j] == "O" || m[i][j] == "[" || m[i][j] == "]"
     }
 }
 
