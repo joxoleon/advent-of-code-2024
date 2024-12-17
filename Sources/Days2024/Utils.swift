@@ -88,5 +88,11 @@ enum Util {
             Self.allCases[(Self.allCases.firstIndex(of: self)! + 3) % Self.allCases.count]
         }
     }
+    
+    struct MovementState: Hashable {
+        let position: Position
+        let direction: Direction
+        
+    }
 }
 
