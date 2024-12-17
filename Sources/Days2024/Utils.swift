@@ -61,7 +61,7 @@ enum Util {
         }
     }
 
-    enum Direction: Hashable {
+    enum Direction: Hashable, CaseIterable {
         case left
         case up
         case right
@@ -78,6 +78,14 @@ enum Util {
             case .down:
                 return Position(1, 0)
             }
+        }
+
+        func turnRight() -> Direction {
+            Self.allCases[(Self.allCases.firstIndex(of: self)! + 1) % Self.allCases.count]
+        }
+
+        func turnLeft() -> Direction {
+            Self.allCases[(Self.allCases.firstIndex(of: self)! + 3) % Self.allCases.count]
         }
     }
 }
