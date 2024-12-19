@@ -143,6 +143,7 @@ class DayNineteen: Day {
 
     func isPossibleTrieRecursive(combination: String) -> Bool {
         if let result = memo[combination] {
+            print("Memo hit for combination: \(combination), result: \(result)")
             return result
         }
 
