@@ -94,5 +94,14 @@ enum Util {
         let direction: Direction
         
     }
+
+    static func renderMatrix(m: [[Character]]) {
+        for row in m {
+            for cell in row {
+                print(cell, terminator: "")
+            }
+            print("")
+        }
+    }
 }
 
