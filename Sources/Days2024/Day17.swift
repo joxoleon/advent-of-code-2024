@@ -34,7 +34,7 @@ class DaySeventeen: Day {
         let a = lines[0].components(separatedBy: ": ")[1]
         let b: String = lines[1].components(separatedBy: ": ")[1]
         let c: String = lines[2].components(separatedBy: ": ")[1]
-
+        
         let instructions = lines.last!.components(separatedBy: ": ")[1].components(separatedBy: ",").map { Int($0)! }
         return (ip: ip, a: Int(a)!, b: Int(b)!, c: Int(c)!, instructions: instructions)
     }
@@ -75,126 +75,44 @@ class DaySeventeen: Day {
         return output
     }
     
-    // MARK: Part Two Attempt (Back-Solving)
-
-    // Suppose we know the desired output sequence and we want to find A.
-    // We'll try to reconstruct A by going backwards.
+    // MARK: Part Two Attempt
     
-    // We'll define a helper function that tries to find A given the desired output.
     func partTwo(input: String) -> String {
         let data = parseInput(input: input)
-        // The desired output should be the program instructions themselves.
-        let desiredOutput = data.instructions // The puzzle states: output a copy of itself.
-        
-        // We'll try to back solve for the smallest positive A that leads to this output.
-        // Strategy:
-        // - Each iteration in forward direction consumes A and produces one output.
-        // - Backward: Start from A_final = 0 and reconstruct backwards.
-        // The number of iterations is equal to desiredOutput.count.
-        
-        if let foundA = backSolveForA(desiredOutput: desiredOutput) {
-            return "The value of A that causes the program to output a copy of itself is: \(foundA)"
-        } else {
-            return "No solution found."
-        }
+        var target = data.instructions
+        target.reverse()
+        let a = findA(prog: data.instructions, target: target)
+        return "The value of register A is: \(a)"
     }
-    
-    // Backward solver:
-    // Given an output sequence, we reconstruct A starting from the end.
-    func backSolveForA(desiredOutput: [Int]) -> Int? {
-        // We know at the end A_final = 0
-        // We'll build A step by step going backwards.
-        // Let’s denote:
-        // forward:
-        // A_i -> iteration -> A_(i+1)
-        //
-        // backward:
-        // We start from A_end = 0 and go backwards to A_start.
+
+    // The backtracking function to find A:
+    func findA(prog: [Int], target: [Int], a: Int = 0, depth: Int = 0) -> Int {
+        // If we've matched all outputs in target:
+        if depth == target.count {
+            return a
+        }
         
-        var A_next = 0
-        // We'll go backwards from the last output to the first.
-        for out in desiredOutput.reversed() {
-            // We know after the iteration:
-            // A_(i+1) = A_i / 8
-            // => A_i = A_(i+1)*8 + (A_i % 8)
-            // Also we know from forward steps how output was produced:
-            // Steps forward reminder:
-            //  B0 = A_i % 8
-            //  B2 = B0 ^ 2
-            //  C = A_i / (2^B2)
-            //  B4 = B2 ^ 3
-            //  B5 = B4 ^ C
-            //  out = B5 % 8
-            //
-            // backward:
-            // Given out, A_(i+1), we try all B0 in [0..7].
-            // For each B0, compute B2, B4:
-            //   B2 = B0 ^ 2
-            //   B4 = B2 ^ 3
-            // We know out = B5 % 8 and B5 = B4 ^ C.
-            // So B5 and B4 differ by C. But C = A_i / (2^B2).
-            //
-            // A_i must be consistent:
-            //   A_i = A_(i+1)*8 + B0
-            //   C = A_i / (2^B2)
-            //
-            // Once we pick B0, we know A_i candidate.
-            // From B0, B2 = B0^2, we know divisor = 2^(B2).
-            // A_i must be such that we can find a C that makes out = (B4 ^ C) % 8.
+        // Try all possible next 3-bit increments (0 to 7):
+        for i in 0..<8 {
+            let candidateA = a * 8 + i
+            let output = runProgram(a: candidateA)
             
-            // Let's try all B0 in [0..7].
-            var A_candidate: Int? = nil
-            outer: for B0 in 0...7 {
-                let A_i = A_next * 8 + B0
-                let B2 = B0 ^ 2
-                let B4 = B2 ^ 3
-                
-                // C = A_i / (2^B2)
-                let divisor = 1 << B2
-                let C = A_i / divisor
-                
-                // We have out = (B4 ^ C) % 8
-                // That means (B4 ^ C) % 8 = out
-                // Let’s consider (B4 ^ C).
-                // C might be large, but mod 8 we only need last 3 bits of C and B4.
-                
-                // Check if there's a C that matches this condition:
-                // We have B4 (0..7 since B4 is from XOR of small numbers?), B4 is small:
-                // Actually, B4 is also in range 0..7 since it's XOR of values in [0..7].
-                let B4_mod_8 = B4 & 7
-                // We want: (B4 ^ C) % 8 = out
-                // Focus on mod 8: Let’s only consider C mod 8:
-                let C_mod_8 = C & 7
-                
-                // (B4_mod_8 ^ C_mod_8) == out
-                // Check if this holds:
-                if (B4_mod_8 ^ C_mod_8) == out {
-                    // This B0 and A_i works for this iteration
-                    A_candidate = A_i
-                    break outer
+            // We need at least one output and the first output should match target[depth]
+            if let first = output.first, first == target[depth] {
+                if let result = optionalFindAResult(prog: prog, target: target, a: candidateA, depth: depth+1) {
+                    return result
                 }
             }
-            
-            guard let A_found = A_candidate else {
-                // No B0 led to a consistent A_i
-                return nil
-            }
-            
-            // Move to previous iteration:
-            A_next = A_found
         }
-        
-        // After reconstructing all iterations, A_next is our initial A.
-        // Check if A_next > 0 as requested.
-        if A_next > 0 {
-            return A_next
-        } else {
-            return nil
-        }
+        return 0
+    }
+
+    // Helper to allow returning nil when no solution found:
+    func optionalFindAResult(prog: [Int], target: [Int], a: Int, depth: Int) -> Int? {
+        let res = findA(prog: prog, target: target, a: a, depth: depth)
+        return res == 0 ? nil : res
     }
 }
-
-
 
 /*
 
