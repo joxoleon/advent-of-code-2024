@@ -5,10 +5,10 @@ class DayEighteen: Day {
     let dayNumber: Int = 18
     let year = 2024
 
-    let n = 7
-    let firsK = 12 // This is so stupid
+    let n = 71
+    let firsK = 1024 // This is so stupid
     lazy var gc = Util.GridConstraints(rows: n, cols: n)
-    var minSteps = 150
+    
     // MARK: - Part one
 
     func partOne(input: String) -> String {
@@ -54,6 +54,23 @@ class DayEighteen: Day {
     // MARK: - Part two
 
     func partTwo(input: String) -> String {
+        let cp = input.components(separatedBy: .newlines).map { line in // CP as in corrupted positions, not the CP that you meant
+            let c = line.components(separatedBy: ",").map{ Int($0)! }
+            return Util.Position(c[1], c[0])
+        }
+        var grid: [[Character]] = Array(repeating: Array(repeating: ".", count: n), count: n)
+        for p in cp[0..<firsK] {
+            grid[p.i][p.j] = "#"
+        }
 
+        for p in cp[firsK...] {
+            grid[p.i][p.j] = "#"
+            let minSteps = dijkstra(m: grid, sp: Util.Position(0, 0), ep: Util.Position(n - 1, n - 1))
+            if minSteps == Int.max {
+                return "\(p.j),\(p.i)"
+            }
+        }
+
+        fatalError()
     }
 }
