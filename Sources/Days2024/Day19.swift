@@ -78,6 +78,7 @@ class DayNineteen: Day {
     var singleLetterTowels: [String: String] = [:]
     var trie: Trie = Trie()
     var memo = [String: Bool]()
+    var combinationMemo: [String: Int] = [:]
 
 
     func partOne(input: String) -> String {
@@ -165,10 +166,44 @@ class DayNineteen: Day {
         return false
     }
 
+    func combinationCountRecursive(combination: String) -> Int {
+        if let result = combinationMemo[combination] {
+            return result
+        }
+
+        let prefixes = trie.findPotentialPrefixes(in: combination)
+        if prefixes.isEmpty {
+            combinationMemo[combination] = 0
+            return 0
+        }
+
+        var count = 0
+        for prefix in prefixes {
+            let newCombination = combination.dropFirst(prefix.count)
+            if newCombination.isEmpty {
+                count += 1
+            } else {
+                count += combinationCountRecursive(combination: String(newCombination))
+            }
+        }
+
+        combinationMemo[combination] = count
+        return count
+    }
+
     // MARK: - Part Two
 
     func partTwo(input: String) -> String {
-        
-        return ""
+        let components = input.split(separator: "\n\n")
+        let towels = components[0].split(separator: ", ").map { String($0) }
+        let combinations = components[1].split(separator: "\n").map { String($0) }
+
+        var totalCombinationCunt = 0
+        for combination in combinations {
+            print("Checking for combination \(combination)")
+            totalCombinationCunt += combinationCountRecursive(combination: combination)
+        }
+
+        return "Total combinations: \(totalCombinationCunt)"
     }
 }
