@@ -7,7 +7,7 @@ class DayEighteen: Day {
 
     let n = 71
     let firsK = 1024 // This is so stupid
-    lazy var gc = Util.GridConstraints(rows: n, cols: n)
+    lazy var gc: Util.GridConstraints = Util.GridConstraints(rows: n, cols: n)
     
     // MARK: - Part one
 

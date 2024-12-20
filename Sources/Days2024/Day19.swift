@@ -195,7 +195,7 @@ class DayNineteen: Day {
 
     func partTwo(input: String) -> String {
         let components = input.split(separator: "\n\n")
-        let towels = components[0].split(separator: ", ").map { String($0) }
+        // let towels = components[0].split(separator: ", ").map { String($0) }
         let combinations = components[1].split(separator: "\n").map { String($0) }
 
         var totalCombinationCunt = 0

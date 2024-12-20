@@ -3,6 +3,6 @@
 
 import Foundation
 
-let day = DayNineteen()
+let day = DayTwenty()
 day.run()
 
