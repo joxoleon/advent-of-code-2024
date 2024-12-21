@@ -23,6 +23,10 @@ enum Util {
         func isInBounds(_ constraints: GridConstraints) -> Bool {
             return i >= 0 && i < constraints.rows && j >= 0 && j < constraints.cols
         }
+        
+        func manhattanDistance(to other: Position) -> Int {
+            return abs(i - other.i) + abs(j - other.j)
+        }
 
         // Addition
         static func + (lhs: Position, rhs: Position) -> Position {
@@ -88,6 +92,50 @@ enum Util {
             Self.allCases[(Self.allCases.firstIndex(of: self)! + 3) % Self.allCases.count]
         }
     }
+
+    struct Grid {
+        var grid: [[Character]]
+        var constraints: GridConstraints
+
+        init(grid: [[Character]]) {
+            self.grid = grid
+            self.constraints = GridConstraints(rows: grid.count, cols: grid[0].count)
+        }
+
+        func isInBounds(_ p: Position) -> Bool {
+            return p.i >= 0 && p.i < constraints.rows && p.j >= 0 && p.j < constraints.cols
+        }
+
+        func isWall(_ p: Position) -> Bool {
+            return grid[p.i][p.j] == "#"
+        }
+
+        func isPath(_ p: Position) -> Bool {
+            return grid[p.i][p.j] == "."
+        }
+
+        func findPosition(_ c: Character) -> Position? {
+            for i in grid.indices {
+                for j in grid[i].indices {
+                    if grid[i][j] == c {
+                        return Position(i, j)
+                    }
+                }
+            }
+            return nil
+        }
+
+        // Index with position
+        subscript(p: Position) -> Character {
+            get {
+                return grid[p.i][p.j]
+            }
+            set {
+                grid[p.i][p.j] = newValue
+            }
+        }
+    }
+
     
     struct MovementState: Hashable {
         let position: Position

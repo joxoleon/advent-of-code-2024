@@ -22,10 +22,10 @@ extension Day {
 
     public func run() {
         let input = loadInput()
-        // let partOneStartTime = Date()
-        // let partOneResult = partOne(input: input)
-        // let partOneElapsedTimeInterval = Date().timeIntervalSince(partOneStartTime)
-        // print("Day \(dayNumber) - Part One: \(partOneResult) - Elapsed Time: \(partOneElapsedTimeInterval)s")
+        let partOneStartTime = Date()
+        let partOneResult = partOne(input: input)
+        let partOneElapsedTimeInterval = Date().timeIntervalSince(partOneStartTime)
+        print("Day \(dayNumber) - Part One: \(partOneResult) - Elapsed Time: \(partOneElapsedTimeInterval)s")
 
         let partTwoStartTime = Date()
         let partTwoResult = partTwo(input: input)
