@@ -97,6 +97,14 @@ enum Util {
         var grid: [[Character]]
         var constraints: GridConstraints
 
+        var rows: Int {
+            return constraints.rows
+        }
+
+        var cols: Int {
+            return constraints.cols
+        }
+
         init(grid: [[Character]]) {
             self.grid = grid
             self.constraints = GridConstraints(rows: grid.count, cols: grid[0].count)

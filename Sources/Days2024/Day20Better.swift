@@ -5,7 +5,23 @@ class DayTwentyBetter: Day {
     let dayNumber: Int = 20
     let year: Int = 2024
 
-    // MARK: - Part One
+    // Types
+
+    // Parse the input file into a grid and find the starting position
+    func parseGrid(from input: String) -> (grid: Util.Grid, start: Util.Position) {
+        let g = input.components(separatedBy: .newlines).map { line in
+            return Array(line)
+        }
+        let grid = Util.Grid(grid: g)
+        for i in 0..<grid.rows {
+            for j in 0..<grid.cols {
+                if grid[Util.Position(i, j)] == "S" {
+                    return (grid, Util.Position(i, j))
+                }
+            }
+        }
+        fatalError("No start position found")
+    }
 
     func bfsDistances(from start: Util.Position, in grid: Util.Grid) -> [Util.Position: Int] {
         var distances = [start: 0]
@@ -14,55 +30,88 @@ class DayTwentyBetter: Day {
         while !queue.isEmpty {
             let current = queue.removeFirst()
             let currentDistance = distances[current]!
-            
+
             for direction in Util.Direction.allCases {
-                let newPosition = current + direction.dPos()
-                if grid.isInBounds(newPosition) && distances[newPosition] == nil {
-                    distances[newPosition] = currentDistance + 1
-                    queue.append(newPosition)
+                let np = current + direction.dPos()
+                if np.isInBounds(grid.constraints) && distances[np] == nil && grid[np] != "#" {
+                    distances[np] = currentDistance + 1
+                    queue.append(np)
                 }
             }
         }
         
         return distances
     }
-    
-    func countCheats(distances: [Util.Position: Int], minSavedTime: Int, maxCheatDistance: Int) -> Int {
-        let positions = Array(distances.keys)
+
+    // MARK: - Main logic for finding cheats
+
+    func countCheats(grid: Util.Grid, distances: [Util.Position: Int], minSavedTime: Int, maxCheatDistance: Int) -> Int {
         var cheatCount = 0
+        for i in 0..<grid.rows {
+            for j in 0..<grid.cols {
+                let firstTile = grid[Util.Position(i, j)]
+                if firstTile == "#" { continue }
+                let firstDistance = distances[Util.Position(i, j)]!
 
-        for i in 0..<positions.count {
-            for j in i+1..<positions.count {
-                let p1 = positions[i]
-                let p2 = positions[j]
-                let d1 = distances[p1]!
-                let d2 = distances[p2]!
-                let manhattanDistance = abs(p1.i - p2.i) + abs(p1.j - p2.j)
-                if  manhattanDistance > maxCheatDistance {
-                    continue
-                }
-
-                if d2 - d1 - manhattanDistance >= minSavedTime {
-                    cheatCount += 1
+                for k in i..<min(grid.rows, i + maxCheatDistance) {
+                    for l in j + 1..<min(grid.cols, j + maxCheatDistance) {
+                        let secondTile = grid[Util.Position(k, l)]
+                        if secondTile == "#" { continue }
+                        let secondDistance = distances[Util.Position(k, l)]!
+                        let d1 = max(firstDistance, secondDistance)
+                        let d2 = min(firstDistance, secondDistance)
+                        let manhattan = abs(i - k) + abs(j - l)
+                        let savedTime = d1 - d2 - manhattan
+                        if savedTime >= minSavedTime {
+                            cheatCount += 1
+                        }
+                    }
                 }
             }
         }
-
         return cheatCount
     }
 
+    func renderDistancesMatrix(_ distances: [Util.Position: Int], in grid: Util.Grid) {
+        for i in 0..<grid.rows {
+            for j in 0..<grid.cols {
+                let p = Util.Position(i, j)
+                if let d = distances[p] {
+                    print(String(format: "%02d", d), terminator: " ")
+                } else {
+                    print("##", terminator: " ")
+                }
+            }
+            print()
+        }
+    }
+
+
     func partOne(input: String) -> String {
-        let grid = Util.Grid(grid: input.components(separatedBy: .newlines).map { line in return Array(line) })
-        let start = grid.findPosition("S")!
-
+        // Parse the grid and find the start position
+        let (grid, start) = parseGrid(from: input)
+        
+        // Compute shortest distances from the start position
         let distances = bfsDistances(from: start, in: grid)
-        let cheatFor2Steps = countCheats(distances: distances, minSavedTime: 20, maxCheatDistance: 2)
+        
+        // Render the distances matrix
+        renderDistancesMatrix(distances, in: grid)
 
-        return "The number of cheats that save at least 2 steps is \(cheatFor2Steps)"
+        // Count cheats under different rules
+        let minSavedTime = 50
+        let maxCheatDistancePt1 = 2
+        let cheatsFor2Steps = countCheats(grid: grid, distances: distances, minSavedTime: minSavedTime, maxCheatDistance: maxCheatDistancePt1)
+        print("CheatCount: \(cheatsFor2Steps) for minSavedTime: \(minSavedTime) and maxCheatDistance: \(maxCheatDistancePt1)")
+        let maxCheatDistancePt2 = 20
+        let cheatsFor20Steps = countCheats(grid: grid, distances: distances, minSavedTime: minSavedTime, maxCheatDistance: maxCheatDistancePt2)
+        print("CheatCount: \(cheatsFor20Steps) for minSavedTime: \(minSavedTime) and maxCheatDistance: \(maxCheatDistancePt2)")
+        
+        return ""
     }
 
     // MARK: - Part Two
     func partTwo(input: String) -> String {
+        // Implemented in part one
         return ""
     }
 }
