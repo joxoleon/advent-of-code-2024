@@ -6,34 +6,26 @@ class DayTwentyOne: Day {
     let year: Int = 2024
 
     // MARK: - Part One
-
-    var numKeypad = Util.Grid(grid:
-        [
-            ["7", "8", "9"],
-            ["4", "5", "6"],
-            ["1", "2", "3"],
-            ["*", "0", "A"],
-        ]
-    )
-
-    var dirKeypad1 = Util.Grid(grid:
-        [
-            ["*", "^", "A"],
-            ["<", "v", ">"],
-
-        ]
-    )
-
-    var dirKeypad2 = Util.Grid(grid:
-        [
-            ["*", "^", "A"],
-            ["<", "v", ">"],
-
-        ]
-    )
+    
+    let numKeypad = Keypad(g: Util.Grid(grid: [
+        ["7", "8", "9"],
+        ["4", "5", "6"],
+        ["1", "2", "3"],
+        ["*", "0", "A"],
+    ]))
+    
+    let dirKeypad1 = Keypad(g: Util.Grid(grid: [
+        ["*", "^", "A"],
+        ["<", "v", ">"],
+    ]))
+    
+    let dirKeypad2 = Keypad(g: Util.Grid(grid: [
+        ["*", "^", "A"],
+        ["<", "v", ">"],
+    ]))
 
     func partOne(input: String) -> String {
-        testEvaluateCodeShortestOptions()
+        print(evaluateCodeComplexity(code: "029A"))
         return ""
     }
 
@@ -46,26 +38,34 @@ class DayTwentyOne: Day {
     // MARK: - Get shit done functions
 
     func evaluateCodeComplexity(code: String) -> Int {
-        let result = 0
+        let finalResult = 0
+
+        // Get all num keypad paths
+        let numKeypadOptions = numKeypad.evaluateCodeShortestOptions(code: "A" + code)
+        for option in numKeypadOptions {
+            let d1KeypadOptions = dirKeypad1.evaluateCodeShortestOptions(code: "A" + option)
+            for dirOption in d1KeypadOptions {
+                let d2KeypadOptions = dirKeypad1.evaluateCodeShortestOptions(code: "A" + dirOption)
+                for o in d2KeypadOptions {
+                    print(o)
+                }
+            }
+        }
 
 
-
-        return result
+        return finalResult
     }
 
     // MARK: - Test functions
 
-    class NumKeypad {
+    class Keypad {
 
-        var g = Util.Grid(grid:
-            [
-                ["7", "8", "9"],
-                ["4", "5", "6"],
-                ["1", "2", "3"],
-                ["*", "0", "A"],
-            ]
-        )
+        var g: Util.Grid
         var shortestStartEndPaths: [SEKP: [String]] = [:]
+        
+        init(g: Util.Grid) {
+            self.g = g
+        }
 
 
         func evaluateCodeShortestOptions(code: String) -> [String] {
@@ -95,6 +95,10 @@ class DayTwentyOne: Day {
         func shortestDirs(sekp: SEKP) -> [String] {
             if let paths = shortestStartEndPaths[sekp] {
                 return paths
+            }
+            
+            if sekp.start == sekp.end {
+                return []
             }
 
             let pathInput = Util.PathInput(start: sekp.start, end: sekp.end, obstacleCharacters: ["*"])
@@ -133,17 +137,6 @@ class DayTwentyOne: Day {
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
     // MARK: - Utility
 
     static func leastDirectionVariation(paths: [String]) -> [String] {
@@ -173,7 +166,7 @@ class DayTwentyOne: Day {
     func testEvaluateCodeShortestOptions() {
         let codes = ["A029A", "A980A", "A179A", "A456A", "A379A"]
         for code in codes {
-            let result = DayTwentyOne.NumKeypad().evaluateCodeShortestOptions(code: code)
+            let result = numKeypad.evaluateCodeShortestOptions(code: code)
             print("\nCode: \(code)")
             for r in result {
                 print(r)
@@ -184,7 +177,7 @@ class DayTwentyOne: Day {
 
     func testStrToSekps() {
         let str = "029A"
-        let result = DayTwentyOne.NumKeypad().strToSekps(str)
+        let result = numKeypad.strToSekps(str)
         print("strToSekps")
         for s in result {
             print(s)
@@ -199,38 +192,6 @@ class DayTwentyOne: Day {
         paths = ["^>", ">^"]
         result = DayTwentyOne.leastDirectionVariation(paths: paths)
         print(result)
-    }
-
-    func testDirKeypadShortestPaths() {
-        var start = Util.Position(1, 0)
-        var end = Util.Position(0, 2)
-        var pathInput = Util.PathInput(start: start, end: end, obstacleCharacters: ["*"])
-        var paths = dirKeypad1.allShortestPaths(for: pathInput)
-        for path in paths {
-            print(path)
-            print(path.toDirString())
-        }
-
-        start = Util.Position(0, 2)
-        end = Util.Position(1, 0)
-        pathInput = Util.PathInput(start: start, end: end, obstacleCharacters: ["*"])
-        paths = dirKeypad1.allShortestPaths(for: pathInput)
-        for path in paths {
-            print(path)
-            print(path.toDirString())
-        }
-
-
-        start = Util.Position(3, 2)
-        end = Util.Position(1, 0)
-        pathInput = Util.PathInput(start: start, end: end, obstacleCharacters: ["*"])
-        paths = numKeypad.allShortestPaths(for: pathInput)
-        print("num keypad")
-        for path in paths {
-            print(path)
-            print(path.toDirString())
-        }
-
     }
 }
 
