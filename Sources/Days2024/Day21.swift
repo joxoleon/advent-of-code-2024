@@ -25,8 +25,12 @@ class DayTwentyOne: Day {
     ]))
 
     func partOne(input: String) -> String {
-        print(evaluateCodeComplexity(code: "029A"))
-        return ""
+        let codes = input.components(separatedBy: .newlines)
+        var result = 0
+        for code in codes {
+            result += evaluateCodeComplexity(code: code)
+        }
+        return "Complexity: \(result)"
     }
 
     // MARK: - Part Two
@@ -41,19 +45,34 @@ class DayTwentyOne: Day {
         let finalResult = 0
 
         // Get all num keypad paths
+        var allResultingOptions = [String]()
         let numKeypadOptions = numKeypad.evaluateCodeShortestOptions(code: "A" + code)
         for option in numKeypadOptions {
             let d1KeypadOptions = dirKeypad1.evaluateCodeShortestOptions(code: "A" + option)
-            for dirOption in d1KeypadOptions {
+            for dirOption in d1KeypadOptions {                
                 let d2KeypadOptions = dirKeypad1.evaluateCodeShortestOptions(code: "A" + dirOption)
                 for o in d2KeypadOptions {
-                    print(o)
-                }
+                    allResultingOptions.append(o)
+                }               
+                // let first = d2KeypadOptions.first!
+                // let numericPart = Int(code.prefix(3))!
+                // let r = first.count * numericPart
+
+                // for o in d2KeypadOptions {
+                //     assert(o.count == first.count)
+                // }
+
+                // print("Code: \(code)")
+                // print("execute: \(first)")
+                // print("\(r) = \(first.count) * \(numericPart)")
+                // return r
             }
         }
 
-
-        return finalResult
+        let minCount = allResultingOptions.map { $0.count }.min()!
+        let numericPart = Int(code.prefix(3))!
+        print("result: \(minCount) * \(numericPart) = \(minCount * numericPart)")
+        return minCount * numericPart
     }
 
     // MARK: - Test functions
@@ -80,15 +99,22 @@ class DayTwentyOne: Day {
         func combinePaths(_ allPaths: [[String]]) -> [String] {
             guard !allPaths.isEmpty else { return [] }
             var result = allPaths[0]
+            
             for i in 1..<allPaths.count {
                 var newResult = [String]()
-                for path in result {
-                    for nextPath in allPaths[i] {
-                        newResult.append(path + "A" + nextPath)
+                if allPaths[i].isEmpty {
+                    // If the current row is empty, append "A" to each path in the result
+                    newResult = result.map { $0 + "A" }
+                } else {
+                    for path in result {
+                        for nextPath in allPaths[i] {
+                            newResult.append(path + "A" + nextPath)
+                        }
                     }
                 }
                 result = newResult
             }
+            
             return result.map { $0 + "A" }
         }
 
