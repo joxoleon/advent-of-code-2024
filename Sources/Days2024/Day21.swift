@@ -33,7 +33,7 @@ class DayTwentyOne: Day {
     )
 
     func partOne(input: String) -> String {
-        testStrToSekps()
+        testEvaluateCodeShortestOptions()
         return ""
     }
 
@@ -68,15 +68,28 @@ class DayTwentyOne: Day {
         var shortestStartEndPaths: [SEKP: [String]] = [:]
 
 
-        func shortestDirs(code: String) -> [String] {
+        func evaluateCodeShortestOptions(code: String) -> [String] {
             let sekps = strToSekps(code)
-            var shortestPaths = [[]]
+            var allPaths = [[String]]()
             for sekp in sekps {
-                shortestPaths.append(shortestDirs(sekp: sekp))
+                allPaths.append(shortestDirs(sekp: sekp))
             }
-            
+            return combinePaths(allPaths)
+        }
 
-            return []
+        func combinePaths(_ allPaths: [[String]]) -> [String] {
+            guard !allPaths.isEmpty else { return [] }
+            var result = allPaths[0]
+            for i in 1..<allPaths.count {
+                var newResult = [String]()
+                for path in result {
+                    for nextPath in allPaths[i] {
+                        newResult.append(path + "A" + nextPath)
+                    }
+                }
+                result = newResult
+            }
+            return result.map { $0 + "A" }
         }
 
         func shortestDirs(sekp: SEKP) -> [String] {
@@ -109,7 +122,7 @@ class DayTwentyOne: Day {
 
         func strToSekps(_ str: String) -> [SEKP] {
             var result = [SEKP]()
-            let arr: [Character] = Array("A" + str)
+            let arr: [Character] = Array(str)
             for i in 0..<arr.count-1 {
                 let start = g.findPosition(arr[i])!
                 let end = g.findPosition(arr[i+1])!
@@ -156,6 +169,18 @@ class DayTwentyOne: Day {
 
 
     // MARK: - Tests
+
+    func testEvaluateCodeShortestOptions() {
+        let codes = ["A029A", "A980A", "A179A", "A456A", "A379A"]
+        for code in codes {
+            let result = DayTwentyOne.NumKeypad().evaluateCodeShortestOptions(code: code)
+            print("\nCode: \(code)")
+            for r in result {
+                print(r)
+            }
+        }
+
+    }
 
     func testStrToSekps() {
         let str = "029A"
