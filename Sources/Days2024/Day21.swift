@@ -11,6 +11,8 @@ class DayTwentyOne: @preconcurrency Day {
         let first: Util.Position
         let second: Util.Position
 
+        @MainActor static var memoizedDirections: [PositionPair: String] = [:]
+
         func hash(into hasher: inout Hasher) {
             hasher.combine(first)
             hasher.combine(second)
@@ -20,7 +22,10 @@ class DayTwentyOne: @preconcurrency Day {
             return lhs.first == rhs.first && lhs.second == rhs.second
         }
 
-        func directions() -> String {
+        @MainActor func directions(firstHorizontal: Bool = true) -> String {
+            if let memoized = Self.memoizedDirections[self] {
+                return memoized
+            }
             let horizontalDif = second.j - first.j
             var horizontalString = ""
             switch horizontalDif {
@@ -45,7 +50,9 @@ class DayTwentyOne: @preconcurrency Day {
                 default: fatalError("Invalid vertical difference")
             }
 
-            return horizontalString + verticalString
+            let dirs = firstHorizontal ? (horizontalString + verticalString) : (verticalString + horizontalString)
+            Self.memoizedDirections[self] = dirs
+            return dirs
         }
     }
 
@@ -57,7 +64,7 @@ class DayTwentyOne: @preconcurrency Day {
             ["*", "0", "A"] // Star should never be directed at
         ]
         
-        @MainActor static var positions: [Character: Util.Position] = {
+         static let positions: [Character: Util.Position] = {
             var positions = [Character: Util.Position]()
             for i in 0..<grid.count {
                 for j in 0..<grid[i].count {
@@ -67,40 +74,17 @@ class DayTwentyOne: @preconcurrency Day {
             return positions
         }()
 
-        @MainActor static var directions: [PositionPair: String] = {
-            var directions = [PositionPair: String]()
-            for i in 0..<grid.count {
-                for j in 0..<grid[i].count {
-                    let first = Util.Position(i, j)
-                    for k in 0..<grid.count {
-                        for l in 0..<grid[k].count {
-                            let second = Util.Position(k, l)
-                            let positionPair = PositionPair(first: first, second: second)
-                            directions[positionPair] = positionPair.directions()
-                        }
-                    }
-                }
-            }
-            
-            return directions
-        }()
-
         @MainActor static func evaluate(_ code: String) -> String {
-            print("*** Evaluate code: \(code)")
             var position = Util.Position(3, 2)
             var result = ""
             for c in code {
                 if let newPosition = positions[c] {
                     let positionPair = PositionPair(first: position, second: newPosition)
-                    if let direction = directions[positionPair] {
-                        result += direction
-                        result += "A" // Press the button
-                        // print("key[\(grid[position.i][position.j])] -> key[\(grid[newPosition.i][newPosition.j])]: \(direction + "A")")
-
-                        position = newPosition
-                    } else {
-                        fatalError("Invalid position pair")
-                    }
+                    let firstHorizontal = position.i != 3
+                    let directions = positionPair.directions(firstHorizontal: firstHorizontal)
+                    result += directions
+                    result += "A" // Press the button
+                    position = newPosition
                 } else {
                     fatalError("Invalid character")
                 }
@@ -125,40 +109,34 @@ class DayTwentyOne: @preconcurrency Day {
             return positions
         }()
 
-        @MainActor static var directions: [PositionPair: String] = {
-            var directions = [PositionPair: String]()
-            for i in 0..<grid.count {
-                for j in 0..<grid[i].count {
-                    let first = Util.Position(i, j)
-                    for k in 0..<grid.count {
-                        for l in 0..<grid[k].count {
-                            let second = Util.Position(k, l)
-                            let positionPair = PositionPair(first: first, second: second)
-                            directions[positionPair] = positionPair.directions()
-                        }
-                    }
-                }
-            }
-            
-            return directions
-        }()
-
         @MainActor static func evaluate(_ code: String) -> String {
-            print("*** Evaluate code: \(code)")
             var position = Util.Position(0, 2)
             var result = ""
             for c in code {
                 if let newPosition = positions[c] {
                     let positionPair = PositionPair(first: position, second: newPosition)
-                    if let direction = directions[positionPair] {
-                        result += direction
-                        result += "A" // Press the button
-                        // print("key[\(grid[position.i][position.j])] -> key[\(grid[newPosition.i][newPosition.j])]: \(direction + "A")")
-
-                        position = newPosition
-                    } else {
-                        fatalError("Invalid position pair")
+                    let dirs = positionPair.directions()
+                    // Sort the directions by distance from the current position in order to minimize the number of moves
+                    // Make sure that the top left corner is UNREACHABLE
+                    let directions = dirs.sorted { (a, b) -> Bool in
+                        let aPos = positions[a]!
+                        let bPos = positions[b]!
+                        
+                        // Check if moving to a or b would lead to the top left corner
+                        if (aPos.i == 0 && aPos.j == 0) {
+                            return false
+                        }
+                        if (bPos.i == 0 && bPos.j == 0) {
+                            return true
+                        }
+                        
+                        let aDist = abs(aPos.i - position.i) + abs(aPos.j - position.j)
+                        let bDist = abs(bPos.i - position.i) + abs(bPos.j - position.j)
+                        return aDist < bDist
                     }
+                    result += directions
+                    result += "A" // Press the button
+                    position = newPosition
                 } else {
                     fatalError("Invalid character")
                 }
@@ -175,7 +153,10 @@ class DayTwentyOne: @preconcurrency Day {
         let numericResult = NumericKeyboard.evaluate(code)
         let d1Result = DirectionalKeyboard.evaluate(numericResult)
         let d2Result = DirectionalKeyboard.evaluate(d1Result)
-        print("*** Evaluated code: \(d2Result)")
+        print("\(d2Result)")
+        print("\(d1Result)")
+        print("\(numericResult)")
+        print("\(code)")
         let complexity = d2Result.count * codeNumericPart
         print("Code: \(code), Complexity: \(complexity) = \(d2Result.count) * \(codeNumericPart)")
         return complexity

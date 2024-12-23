@@ -63,6 +63,22 @@ enum Util {
         static func /= (lhs: inout Position, rhs: Int) {
             lhs = lhs / rhs
         }
+
+        // Move
+        func move(_ direction: Character) -> Util.Position {
+            switch direction {
+            case "^":
+                return Util.Position(i - 1, j)
+            case "v":
+                return Util.Position(i + 1, j)
+            case "<":
+                return Util.Position(i, j - 1)
+            case ">":
+                return Util.Position(i, j + 1)
+            default:
+                fatalError("Invalid direction")
+        }
+    }
     }
 
     enum Direction: Hashable, CaseIterable {
