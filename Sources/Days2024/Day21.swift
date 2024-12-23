@@ -7,19 +7,14 @@ class DayTwentyOne: Day {
 
     // MARK: - Part One
     
-    let numKeypad = Keypad(g: Util.Grid(grid: [
+    let numK = Keypad(g: Util.Grid(grid: [
         ["7", "8", "9"],
         ["4", "5", "6"],
         ["1", "2", "3"],
         ["*", "0", "A"],
     ]))
     
-    let dirKeypad1 = Keypad(g: Util.Grid(grid: [
-        ["*", "^", "A"],
-        ["<", "v", ">"],
-    ]))
-    
-    let dirKeypad2 = Keypad(g: Util.Grid(grid: [
+    let dirK = Keypad(g: Util.Grid(grid: [
         ["*", "^", "A"],
         ["<", "v", ">"],
     ]))
@@ -46,26 +41,14 @@ class DayTwentyOne: Day {
 
         // Get all num keypad paths
         var allResultingOptions = [String]()
-        let numKeypadOptions = numKeypad.evaluateCodeShortestOptions(code: "A" + code)
+        let numKeypadOptions = numK.evaluateCodeShortestOptions(code: "A" + code)
         for option in numKeypadOptions {
-            let d1KeypadOptions = dirKeypad1.evaluateCodeShortestOptions(code: "A" + option)
+            let d1KeypadOptions = dirK.evaluateCodeShortestOptions(code: "A" + option)
             for dirOption in d1KeypadOptions {                
-                let d2KeypadOptions = dirKeypad1.evaluateCodeShortestOptions(code: "A" + dirOption)
+                let d2KeypadOptions = dirK.evaluateCodeShortestOptions(code: "A" + dirOption)
                 for o in d2KeypadOptions {
                     allResultingOptions.append(o)
                 }               
-                // let first = d2KeypadOptions.first!
-                // let numericPart = Int(code.prefix(3))!
-                // let r = first.count * numericPart
-
-                // for o in d2KeypadOptions {
-                //     assert(o.count == first.count)
-                // }
-
-                // print("Code: \(code)")
-                // print("execute: \(first)")
-                // print("\(r) = \(first.count) * \(numericPart)")
-                // return r
             }
         }
 
@@ -197,7 +180,7 @@ class DayTwentyOne: Day {
     func testEvaluateCodeShortestOptions() {
         let codes = ["A029A", "A980A", "A179A", "A456A", "A379A"]
         for code in codes {
-            let result = numKeypad.evaluateCodeShortestOptions(code: code)
+            let result = numK.evaluateCodeShortestOptions(code: code)
             print("\nCode: \(code)")
             for r in result {
                 print(r)
@@ -208,7 +191,7 @@ class DayTwentyOne: Day {
 
     func testStrToSekps() {
         let str = "029A"
-        let result = numKeypad.strToSekps(str)
+        let result = numK.strToSekps(str)
         print("strToSekps")
         for s in result {
             print(s)
