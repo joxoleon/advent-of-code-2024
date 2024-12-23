@@ -67,18 +67,18 @@ enum Util {
         // Move
         func move(_ direction: Character) -> Util.Position {
             switch direction {
-            case "^":
-                return Util.Position(i - 1, j)
-            case "v":
-                return Util.Position(i + 1, j)
-            case "<":
-                return Util.Position(i, j - 1)
-            case ">":
-                return Util.Position(i, j + 1)
-            default:
-                fatalError("Invalid direction")
+                case "^":
+                    return Util.Position(i - 1, j)
+                case "v":
+                    return Util.Position(i + 1, j)
+                case "<":
+                    return Util.Position(i, j - 1)
+                case ">":
+                    return Util.Position(i, j + 1)
+                default:
+                    fatalError("Invalid direction")
+            }
         }
-    }
     }
 
     enum Direction: Hashable, CaseIterable {
@@ -109,9 +109,17 @@ enum Util {
         }
     }
 
+    struct PathInput: Hashable {
+        let start: Position
+        let end: Position
+        let obstacleCharacters: Set<Character>
+    }
+
     struct Grid {
         var grid: [[Character]]
         var constraints: GridConstraints
+        var memoizedPaths: [PathInput: [[Position]]] = [:]
+        var memoizedPositions: [Character: Position] = [:]
 
         var rows: Int {
             return constraints.rows
@@ -138,15 +146,59 @@ enum Util {
             return grid[p.i][p.j] == "."
         }
 
-        func findPosition(_ c: Character) -> Position? {
+        mutating func findPosition(_ c: Character) -> Position? {
+            if let memoized = memoizedPositions[c] {
+                return memoized
+            }
+            
             for i in grid.indices {
                 for j in grid[i].indices {
                     if grid[i][j] == c {
+                        memoizedPositions[c] = Position(i, j)
                         return Position(i, j)
                     }
                 }
             }
             return nil
+        }
+
+        // This function needs to go through all possible shortest paths from input.start to input.end
+        // And return them as an array of arrays of positions (each array is a path)
+        // The paths should not contain any obstacles
+        mutating func allShortestPaths(for input: PathInput) -> [[Position]] {
+            if let memoized = memoizedPaths[input] {
+                return memoized
+            }
+
+            var allPaths: [[Position]] = []
+            var currentPath: [Position] = []
+
+            func dfs(current: Position) {
+                if current == input.end {
+                    allPaths.append(currentPath)
+                    return
+                }
+
+                for dir in [(0,1), (1,0), (0,-1), (-1,0)] {
+                    let next = Position(current.i + dir.0, current.j + dir.1)
+                    if isInBounds(next) && 
+                       !currentPath.contains(next) &&
+                       !input.obstacleCharacters.contains(grid[next.i][next.j]) {
+                        currentPath.append(next)
+                        dfs(current: next)
+                        currentPath.removeLast()
+                    }
+                }
+            }
+
+            currentPath.append(input.start)
+            dfs(current: input.start)
+
+            let minLength = allPaths.map { $0.count }.min() ?? 0
+            let shortestPaths = allPaths.filter { $0.count == minLength }
+
+            memoizedPaths[input] = shortestPaths
+            return shortestPaths
         }
 
         // Index with position
@@ -177,3 +229,22 @@ enum Util {
     }
 }
 
+extension Array where Element == Util.Position {
+    func toDirString() -> String {
+        var result = ""
+        for i in 0..<count - 1 {
+            let current = self[i]
+            let next = self[i + 1]
+            if next.i > current.i {
+                result += "v"
+            } else if next.i < current.i {
+                result += "^"
+            } else if next.j > current.j {
+                result += ">"
+            } else {
+                result += "<"
+            }
+        }
+        return result
+    }
+}

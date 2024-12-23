@@ -1,181 +1,215 @@
 // https://adventofcode.com/2024/day/21
 import Foundation
 
-class DayTwentyOne: @preconcurrency Day {
+class DayTwentyOne: Day {
     let dayNumber: Int = 21
     let year: Int = 2024
 
-    // MARK: - Types
+    // MARK: - Part One
 
-    struct PositionPair: Hashable {
-        let first: Util.Position
-        let second: Util.Position
-
-        @MainActor static var memoizedDirections: [PositionPair: String] = [:]
-
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(first)
-            hasher.combine(second)
-        }
-
-        static func == (lhs: PositionPair, rhs: PositionPair) -> Bool {
-            return lhs.first == rhs.first && lhs.second == rhs.second
-        }
-
-        @MainActor func directions(firstHorizontal: Bool = true) -> String {
-            if let memoized = Self.memoizedDirections[self] {
-                return memoized
-            }
-            let horizontalDif = second.j - first.j
-            var horizontalString = ""
-            switch horizontalDif {
-                case 1: horizontalString += ">"
-                case 2: horizontalString += ">>"
-                case -1: horizontalString += "<"
-                case -2: horizontalString += "<<"
-                case 0: break
-                default: fatalError("Invalid horizontal difference")
-            }
-
-            let verticalDif = second.i - first.i
-            var verticalString = ""
-            switch verticalDif {
-                case 1: verticalString += "v"
-                case 2: verticalString += "vv"
-                case 3: verticalString += "vvv"
-                case -1: verticalString += "^"
-                case -2: verticalString += "^^"
-                case -3: verticalString += "^^^"
-                case 0: break
-                default: fatalError("Invalid vertical difference")
-            }
-
-            let dirs = firstHorizontal ? (horizontalString + verticalString) : (verticalString + horizontalString)
-            Self.memoizedDirections[self] = dirs
-            return dirs
-        }
-    }
-
-    class NumericKeyboard {
-        static let grid: [[Character]] = [
+    var numKeypad = Util.Grid(grid:
+        [
             ["7", "8", "9"],
             ["4", "5", "6"],
             ["1", "2", "3"],
-            ["*", "0", "A"] // Star should never be directed at
+            ["*", "0", "A"],
         ]
-        
-         static let positions: [Character: Util.Position] = {
-            var positions = [Character: Util.Position]()
-            for i in 0..<grid.count {
-                for j in 0..<grid[i].count {
-                    positions[grid[i][j]] = Util.Position(i, j)
-                }
-            }
-            return positions
-        }()
+    )
 
-        @MainActor static func evaluate(_ code: String) -> String {
-            var position = Util.Position(3, 2)
-            var result = ""
-            for c in code {
-                if let newPosition = positions[c] {
-                    let positionPair = PositionPair(first: position, second: newPosition)
-                    let firstHorizontal = position.i != 3
-                    let directions = positionPair.directions(firstHorizontal: firstHorizontal)
-                    result += directions
-                    result += "A" // Press the button
-                    position = newPosition
-                } else {
-                    fatalError("Invalid character")
-                }
-            }
-            return result
-        }
-    }
+    var dirKeypad1 = Util.Grid(grid:
+        [
+            ["*", "^", "A"],
+            ["<", "v", ">"],
 
-    class DirectionalKeyboard {
-        static let grid: [[Character]] = [
-            ["*", "^", "A"], // Star should never be directed at
-            ["<", "v", ">"]
         ]
+    )
 
-        @MainActor static var positions: [Character: Util.Position] = {
-            var positions = [Character: Util.Position]()
-            for i in 0..<grid.count {
-                for j in 0..<grid[i].count {
-                    positions[grid[i][j]] = Util.Position(i, j)
-                }
-            }
-            return positions
-        }()
+    var dirKeypad2 = Util.Grid(grid:
+        [
+            ["*", "^", "A"],
+            ["<", "v", ">"],
 
-        @MainActor static func evaluate(_ code: String) -> String {
-            var position = Util.Position(0, 2)
-            var result = ""
-            for c in code {
-                if let newPosition = positions[c] {
-                    let positionPair = PositionPair(first: position, second: newPosition)
-                    let dirs = positionPair.directions()
-                    // Sort the directions by distance from the current position in order to minimize the number of moves
-                    // Make sure that the top left corner is UNREACHABLE
-                    let directions = dirs.sorted { (a, b) -> Bool in
-                        let aPos = positions[a]!
-                        let bPos = positions[b]!
-                        
-                        // Check if moving to a or b would lead to the top left corner
-                        if (aPos.i == 0 && aPos.j == 0) {
-                            return false
-                        }
-                        if (bPos.i == 0 && bPos.j == 0) {
-                            return true
-                        }
-                        
-                        let aDist = abs(aPos.i - position.i) + abs(aPos.j - position.j)
-                        let bDist = abs(bPos.i - position.i) + abs(bPos.j - position.j)
-                        return aDist < bDist
-                    }
-                    result += directions
-                    result += "A" // Press the button
-                    position = newPosition
-                } else {
-                    fatalError("Invalid character")
-                }
-            }
-            return result
-        }
-    }
+        ]
+    )
 
-    // MARK: - Part One
-
-    @MainActor func evaluateCodeComplexity(_ code: String) -> Int {
-        print("")
-        let codeNumericPart = Int(code.prefix(3))!
-        let numericResult = NumericKeyboard.evaluate(code)
-        let d1Result = DirectionalKeyboard.evaluate(numericResult)
-        let d2Result = DirectionalKeyboard.evaluate(d1Result)
-        print("\(d2Result)")
-        print("\(d1Result)")
-        print("\(numericResult)")
-        print("\(code)")
-        let complexity = d2Result.count * codeNumericPart
-        print("Code: \(code), Complexity: \(complexity) = \(d2Result.count) * \(codeNumericPart)")
-        return complexity
-    }
-
-    @MainActor func partOne(input: String) -> String {
-        let lines = input.components(separatedBy: .newlines)
-        var totalComplexity = 0
-        for line in lines {
-            totalComplexity += evaluateCodeComplexity(line)
-        }
-
-        return "Total complexity: \(totalComplexity)"
+    func partOne(input: String) -> String {
+        testStrToSekps()
+        return ""
     }
 
     // MARK: - Part Two
 
     func partTwo(input: String) -> String {
-        
         return ""
     }
+
+    // MARK: - Get shit done functions
+
+    func evaluateCodeComplexity(code: String) -> Int {
+        let result = 0
+
+
+
+        return result
+    }
+
+    // MARK: - Test functions
+
+    class NumKeypad {
+
+        var g = Util.Grid(grid:
+            [
+                ["7", "8", "9"],
+                ["4", "5", "6"],
+                ["1", "2", "3"],
+                ["*", "0", "A"],
+            ]
+        )
+        var shortestStartEndPaths: [SEKP: [String]] = [:]
+
+
+        func shortestDirs(code: String) -> [String] {
+            let sekps = strToSekps(code)
+            var shortestPaths = [[]]
+            for sekp in sekps {
+                shortestPaths.append(shortestDirs(sekp: sekp))
+            }
+            
+
+            return []
+        }
+
+        func shortestDirs(sekp: SEKP) -> [String] {
+            if let paths = shortestStartEndPaths[sekp] {
+                return paths
+            }
+
+            let pathInput = Util.PathInput(start: sekp.start, end: sekp.end, obstacleCharacters: ["*"])
+            let shortestPaths = g.allShortestPaths(for: pathInput)
+            let sps = shortestPaths.map { $0.toDirString() }
+            let result = leastDirectionVariation(paths: sps)
+            shortestStartEndPaths[sekp] = result
+            return result
+        }
+
+        func shortestDirs(s: Character, e: Character) -> [String] {
+            let sp = g.findPosition(s)!
+            let ep = g.findPosition(e)!
+            if let paths = shortestStartEndPaths[SEKP(start: sp, end: ep)] {
+                return paths
+            }
+
+            let pathInput = Util.PathInput(start: sp, end: ep, obstacleCharacters: ["*"])
+            let shortestPaths = g.allShortestPaths(for: pathInput)
+            let sps = shortestPaths.map { $0.toDirString() }
+            let result = leastDirectionVariation(paths: sps)
+            shortestStartEndPaths[SEKP(start: sp, end: ep)] = result
+            return result
+        }
+
+        func strToSekps(_ str: String) -> [SEKP] {
+            var result = [SEKP]()
+            let arr: [Character] = Array("A" + str)
+            for i in 0..<arr.count-1 {
+                let start = g.findPosition(arr[i])!
+                let end = g.findPosition(arr[i+1])!
+                result.append(SEKP(start: start, end: end))
+            }
+            return result
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    // MARK: - Utility
+
+    static func leastDirectionVariation(paths: [String]) -> [String] {
+        var result = [String]()
+        var minVariation = Int.max
+        for path in paths {
+            let pa = Array(path)
+            var variation = 0
+            for i in 0..<path.count-1 {
+                if pa[i] != pa[i+1] {
+                    variation += 1
+                }
+            }
+            if variation < minVariation {
+                minVariation = variation
+                result = [path]
+            } else if variation == minVariation {
+                result.append(path)
+            }
+        }
+        return result
+    }
+
+
+    // MARK: - Tests
+
+    func testStrToSekps() {
+        let str = "029A"
+        let result = DayTwentyOne.NumKeypad().strToSekps(str)
+        print("strToSekps")
+        for s in result {
+            print(s)
+        }
+    }
+
+    func testFilterLeastDirectionVariation() {
+        var paths = ["^^>>", ">>^^", "^>^>", ">^^>", "^>>^"]
+        var result = DayTwentyOne.leastDirectionVariation(paths: paths)
+        print(result)
+
+        paths = ["^>", ">^"]
+        result = DayTwentyOne.leastDirectionVariation(paths: paths)
+        print(result)
+    }
+
+    func testDirKeypadShortestPaths() {
+        var start = Util.Position(1, 0)
+        var end = Util.Position(0, 2)
+        var pathInput = Util.PathInput(start: start, end: end, obstacleCharacters: ["*"])
+        var paths = dirKeypad1.allShortestPaths(for: pathInput)
+        for path in paths {
+            print(path)
+            print(path.toDirString())
+        }
+
+        start = Util.Position(0, 2)
+        end = Util.Position(1, 0)
+        pathInput = Util.PathInput(start: start, end: end, obstacleCharacters: ["*"])
+        paths = dirKeypad1.allShortestPaths(for: pathInput)
+        for path in paths {
+            print(path)
+            print(path.toDirString())
+        }
+
+
+        start = Util.Position(3, 2)
+        end = Util.Position(1, 0)
+        pathInput = Util.PathInput(start: start, end: end, obstacleCharacters: ["*"])
+        paths = numKeypad.allShortestPaths(for: pathInput)
+        print("num keypad")
+        for path in paths {
+            print(path)
+            print(path.toDirString())
+        }
+
+    }
+}
+
+struct SEKP: Hashable {
+    let start: Util.Position
+    let end: Util.Position
 }
