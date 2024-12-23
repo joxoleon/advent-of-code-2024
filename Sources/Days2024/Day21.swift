@@ -70,6 +70,11 @@ class DayTwentyOne: Day {
         }
 
         let minCount = allResultingOptions.map { $0.count }.min()!
+        for o in allResultingOptions {
+            if o.count != minCount {
+                print("Error: \(o)")
+            }
+        }
         let numericPart = Int(code.prefix(3))!
         print("result: \(minCount) * \(numericPart) = \(minCount * numericPart)")
         return minCount * numericPart
