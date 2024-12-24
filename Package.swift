@@ -9,13 +9,15 @@ let package = Package(
         .macOS(.v15)
     ],
     dependencies: [
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.0.0")
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-algorithms.git", from: "1.0.0"),
     ],
     targets: [
         .executableTarget(
             name: "AdventOfCode2024",
             dependencies: [
-                "SwiftTerm"
+                "SwiftTerm",
+                .product(name: "Algorithms", package: "swift-algorithms") // Corrected dependency declaration
             ]
         ),
     ]

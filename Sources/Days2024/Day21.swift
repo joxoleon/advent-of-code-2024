@@ -37,7 +37,7 @@ class DayTwentyOne: Day {
     // MARK: - Get shit done functions
 
     func evaluateCodeComplexity(code: String) -> Int {
-        let finalResult = 0
+        // let finalResult = 0
 
         // Get all num keypad paths
         var allResultingOptions = [String]()
