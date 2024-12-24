@@ -23,42 +23,62 @@ class DayTwentyTwo: Day {
         let n = 2000
         let inputs = input.components(separatedBy: .newlines).compactMap { Int($0) }
 
-        struct FourDiffSequence: Hashable {
-            let diffs: [Int]
+        let testSequence = FourDiffSequence(diff1: -2, diff2: 1, diff3: -1, diff4: 3)
 
+    
+        struct FourDiffSequence: Hashable {
+            let diff1: Int
+            let diff2: Int
+            let diff3: Int
+            let diff4: Int
+    
             // Initialize with a sequence of 4 diffs
-            init(diffs: [Int]) {
-                self.diffs = diffs
+            init(diff1: Int, diff2: Int, diff3: Int, diff4: Int) {
+                self.diff1 = diff1
+                self.diff2 = diff2
+                self.diff3 = diff3
+                self.diff4 = diff4
             }
         }
         var diffsToPrice = [FourDiffSequence: Int]()
-
-        for i in 0..<inputs.count {
-            let input = inputs[i]
-            print("Processing input: \(i)/\(inputs.count)")
-            
-            // Secret evolution
-            var secrets = Array(repeating: 0, count: n)
-            for i in 0..<n {
-                secrets[i] = evolve(secret: input, times: i)
-            }
-
-            // Diff evolution
-            var diffs = Array(repeating: 0, count: n)
-            for i in 1..<n {
+    
+        for (index, input) in inputs.enumerated() {
+            print("Processing input: \(index + 1)/\(inputs.count)")
+    
+            // Secret evolution and diff evolution in a single pass
+            var secrets = Array(repeating: 0, count: n + 1)
+            var diffs = Array(repeating: 0, count: n + 1)
+            secrets[0] = input
+            diffs[0] = 0
+            for i in 1...n {
+                secrets[i] = evolve(secret: secrets[i - 1])
                 diffs[i] = (secrets[i] % 10) - (secrets[i - 1] % 10)
             }
-
+    
             // Sequence creation
-            for i in 4..<n {
-                let sequence = FourDiffSequence(diffs: Array(diffs[i-4...i-1]))
+            var visited = Set<FourDiffSequence>()
+            for i in 3...n {
+                let sequence = FourDiffSequence(diff1: diffs[i-3], diff2: diffs[i-2], diff3: diffs[i-1], diff4: diffs[i])
+                if visited.contains(sequence) {
+                    continue
+                }
+                visited.insert(sequence)
+                if sequence == testSequence {
+                    print("Found sequence at index: \(i)")
+                    print("Price for sequence\(testSequence) is \(secrets[i] % 10)")
+                }
                 diffsToPrice[sequence, default: 0] += secrets[i] % 10
             }
         }
 
-        let maxPrice = diffsToPrice.values.max()!
-        
+        let maxSequence = diffsToPrice.max { $0.value < $1.value }!.key
+        print("Max sequence: \(maxSequence)")
 
+        print("Price for sequence\(testSequence) is: \(diffsToPrice[testSequence]!)")
+
+
+        let maxPrice = diffsToPrice.values.max()!
+    
         return "Max price: \(maxPrice)"
     }
 
@@ -92,27 +112,5 @@ class DayTwentyTwo: Day {
             s &= 0xFFFFFF
         }
         return s
-    }
-
-    func evolveSecretsAndDiffs(secret: Int, times: Int = 10) -> (secrets: [Int], diffs: [Int], maxDiff: Int, sequence: [Int]) {
-        var secrets = Array(repeating: 0, count: times)
-        secrets[0] = secret
-        var diffs = Array(repeating: 0, count: times)
-        var maxDiffIndex = 0
-        var maxDiff = 0
-        for i in 1..<times {
-            let newSecret = evolve(secret: secrets[i - 1])
-            secrets[i] = newSecret
-            let nsv = newSecret % 10
-            let psv = secrets[i - 1] % 10
-            diffs[i] = nsv - psv
-            if diffs[i] > maxDiff && i > 3 {
-                maxDiff = diffs[i]
-                maxDiffIndex = i
-            }
-        }
-        let sequence = Array(diffs[maxDiffIndex-3...maxDiffIndex])
-        return (secrets, diffs, maxDiff, sequence)
-
     }
 }
